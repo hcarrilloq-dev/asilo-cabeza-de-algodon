@@ -1,0 +1,163 @@
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap');
+
+/* Atkinson Hyperlegible: tipografía diseñada para máxima legibilidad,
+   pensada para el personal que trabaja muchas horas frente a la pantalla. */
+:root {
+  --fondo: #f2f5f6;
+  --superficie: #ffffff;
+  --tinta: #1d2a32;
+  --tinta-suave: #566872;
+  --borde: #d5dee1;
+  --primario: #2c6b67;
+  --primario-oscuro: #1f504d;
+  --primario-suave: #e2eeec;
+  --peligro: #a63d2c;
+  --peligro-suave: #f8e6e2;
+  --aviso: #8a5d0c;
+  --aviso-suave: #f7eedb;
+  --radio: 10px;
+  --fuente: 'Atkinson Hyperlegible', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--fuente);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--tinta);
+  background: var(--fondo);
+}
+h1, h2, h3 { line-height: 1.2; margin: 0; }
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.25rem; }
+a { color: var(--primario); }
+:focus-visible { outline: 3px solid var(--primario); outline-offset: 2px; }
+
+/* ---------- Botones y campos ---------- */
+.boton {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  font: inherit; font-weight: 700; padding: .65rem 1.1rem;
+  border-radius: var(--radio); border: 1px solid transparent; cursor: pointer;
+  background: var(--primario); color: #fff; text-decoration: none;
+}
+.boton:hover { background: var(--primario-oscuro); }
+.boton:disabled { opacity: .6; cursor: wait; }
+.boton.secundario { background: var(--superficie); color: var(--tinta); border-color: var(--borde); }
+.boton.secundario:hover { background: var(--fondo); }
+.boton.peligro { background: var(--superficie); color: var(--peligro); border-color: var(--peligro); }
+.boton.chico { padding: .35rem .7rem; font-size: .9rem; }
+
+.campo { display: flex; flex-direction: column; gap: .35rem; }
+.campo label { font-weight: 700; font-size: .95rem; }
+.campo small { color: var(--tinta-suave); }
+input, select, textarea {
+  font: inherit; color: var(--tinta); background: var(--superficie);
+  border: 1px solid var(--borde); border-radius: var(--radio); padding: .6rem .75rem; width: 100%;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primario); box-shadow: 0 0 0 3px var(--primario-suave); }
+textarea { resize: vertical; min-height: 4.5rem; }
+
+.mensaje { padding: .75rem 1rem; border-radius: var(--radio); }
+.mensaje.error { background: var(--peligro-suave); color: var(--peligro); }
+.mensaje.exito { background: var(--primario-suave); color: var(--primario-oscuro); }
+.mensaje ul { margin: .35rem 0 0; padding-left: 1.2rem; }
+
+/* ---------- Login ---------- */
+.login {
+  min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr;
+}
+.login-marca {
+  background: var(--primario); color: #fff; padding: 3rem;
+  display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;
+}
+.login-marca h1 { font-size: 2.6rem; max-width: 12ch; }
+.login-marca p { max-width: 36ch; opacity: .9; }
+.login-logo { width: 56px; }
+.login-algodon { position: absolute; right: -60px; bottom: -40px; width: 380px; opacity: .14; }
+.login-form { display: flex; align-items: center; justify-content: center; padding: 2rem; }
+.login-form form { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 1.1rem; }
+.login-form h2 { font-size: 1.6rem; }
+.login-form .ayuda { color: var(--tinta-suave); margin: -.6rem 0 .4rem; }
+@media (max-width: 800px) {
+  .login { grid-template-columns: 1fr; }
+  .login-marca { padding: 2rem; min-height: 200px; }
+  .login-marca h1 { font-size: 2rem; }
+}
+
+/* ---------- Panel ---------- */
+.panel { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+.lateral {
+  background: var(--superficie); border-right: 1px solid var(--borde);
+  padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 1.5rem;
+}
+.marca { display: flex; align-items: center; gap: .6rem; font-weight: 700; color: var(--primario-oscuro); padding: 0 .5rem; }
+.marca svg { width: 38px; flex-shrink: 0; }
+.marca span { line-height: 1.15; }
+.menu { display: flex; flex-direction: column; gap: .25rem; }
+.menu a {
+  display: block; padding: .6rem .75rem; border-radius: var(--radio);
+  color: var(--tinta); text-decoration: none;
+}
+.menu a:hover { background: var(--fondo); }
+.menu a.activo { background: var(--primario-suave); color: var(--primario-oscuro); font-weight: 700; }
+.usuario-actual { margin-top: auto; padding: .75rem; border-top: 1px solid var(--borde); font-size: .95rem; }
+.usuario-actual strong { display: block; }
+.usuario-actual span { color: var(--tinta-suave); }
+.usuario-actual button { margin-top: .6rem; width: 100%; }
+
+.contenido { padding: 2rem 2.5rem; max-width: 1150px; width: 100%; }
+.encabezado { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.encabezado p { margin: .3rem 0 0; color: var(--tinta-suave); }
+
+.caja { background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); padding: 1.5rem; }
+
+@media (max-width: 860px) {
+  .panel { grid-template-columns: 1fr; }
+  .lateral { border-right: none; border-bottom: 1px solid var(--borde); padding: 1rem; gap: .75rem; }
+  .menu { flex-direction: row; flex-wrap: wrap; }
+  .usuario-actual { margin-top: 0; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .usuario-actual button { width: auto; margin: 0; }
+  .contenido { padding: 1.25rem; }
+}
+
+/* ---------- Inicio ---------- */
+.resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.dato { padding: 1.25rem; border-radius: var(--radio); background: var(--superficie); border: 1px solid var(--borde); }
+.dato b { display: block; font-size: 2rem; color: var(--primario-oscuro); }
+.dato span { color: var(--tinta-suave); }
+.modulos { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: .5rem; }
+.modulos li { display: flex; justify-content: space-between; gap: 1rem; padding: .6rem 0; border-bottom: 1px solid var(--borde); }
+.modulos li:last-child { border-bottom: none; }
+
+/* ---------- Tablas ---------- */
+.filtros { display: flex; gap: .75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.filtros input { max-width: 340px; }
+.filtros select { max-width: 180px; }
+.tabla-envoltura { overflow-x: auto; background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: .75rem 1rem; border-bottom: 1px solid var(--borde); white-space: nowrap; }
+th { font-size: .9rem; color: var(--tinta-suave); background: var(--fondo); }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: #f8fafb; }
+.vacio { padding: 2.5rem 1rem; text-align: center; color: var(--tinta-suave); }
+
+.etiqueta { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .85rem; font-weight: 700; }
+.etiqueta.Activo, .etiqueta.si { background: var(--primario-suave); color: var(--primario-oscuro); }
+.etiqueta.Egresado { background: var(--aviso-suave); color: var(--aviso); }
+.etiqueta.Fallecido, .etiqueta.no { background: #e8ecee; color: var(--tinta-suave); }
+
+/* ---------- Formularios ---------- */
+.formulario { display: flex; flex-direction: column; gap: 1.5rem; }
+.formulario fieldset { border: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+.formulario legend { font-weight: 700; font-size: 1.1rem; margin-bottom: .75rem; color: var(--primario-oscuro); }
+.formulario .ancho { grid-column: 1 / -1; }
+.acciones { display: flex; gap: .75rem; flex-wrap: wrap; }
+.requerido { color: var(--peligro); }
+
+.detalle { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem 1.5rem; margin: 0; }
+.detalle dt { color: var(--tinta-suave); font-size: .9rem; }
+.detalle dd { margin: .15rem 0 0; font-weight: 700; }
+.detalle .ancho { grid-column: 1 / -1; }
+
+.cargando { color: var(--tinta-suave); padding: 2rem 0; }
