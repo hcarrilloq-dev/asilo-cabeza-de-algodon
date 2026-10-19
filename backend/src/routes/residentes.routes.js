@@ -1,19 +1,28 @@
 const express = require('express');
 const { consultar } = require('../config/db');
 const { verificarToken, permitirRoles } = require('../middleware/auth');
-const { validarResidente, ESTADOS_RESIDENTE } = require('../validators/validaciones');
+const { validarResidente, ESTADOS_RESIDENTE, idValido } = require('../validators/validaciones');
+const { PERMISOS } = require('../config/roles');
 const { registrarAuditoria } = require('../utils/auditoria');
 
 const router = express.Router();
 router.use(verificarToken);
 
-const LECTURA = ['Administrador', 'Recepcion', 'Medico', 'Enfermeria', 'Contabilidad'];
-const ESCRITURA = ['Administrador', 'Recepcion'];
+const LECTURA = PERMISOS.verResidentes;
+const ESCRITURA = PERMISOS.editarResidentes;
+
+// Valida el :id de la ruta antes de llegar a la base de datos
+router.param('id', (req, res, next, valor) => {
+  const id = idValido(valor);
+  if (!id) return res.status(400).json({ mensaje: 'El identificador no es válido.' });
+  req.idRegistro = id;
+  return next();
+});
 
 const COLUMNAS = `id, codigo, nombres, apellidos, dpi,
   CONVERT(char(10), fecha_nacimiento, 23) AS fecha_nacimiento, sexo,
   CONVERT(char(10), fecha_ingreso, 23) AS fecha_ingreso, estado, tipo_sangre, alergias,
-  condiciones_medicas, habitacion, observaciones`;
+  psicopatologias, medicamentos_cajon, condiciones_medicas, habitacion, observaciones`;
 
 const limpiar = (v) => (v === undefined || v === null || String(v).trim() === '' ? null : String(v).trim());
 
@@ -28,6 +37,8 @@ function parametros(body) {
     tipoSangre: limpiar(body.tipo_sangre),
     alergias: limpiar(body.alergias),
     condiciones: limpiar(body.condiciones_medicas),
+    psicopatologias: limpiar(body.psicopatologias),
+    medicamentosCajon: limpiar(body.medicamentos_cajon),
     habitacion: limpiar(body.habitacion),
     observaciones: limpiar(body.observaciones),
   };
@@ -54,7 +65,7 @@ router.get('/', permitirRoles(...LECTURA), async (req, res, next) => {
 // GET /api/residentes/:id
 router.get('/:id', permitirRoles(...LECTURA), async (req, res, next) => {
   try {
-    const filas = await consultar(`SELECT ${COLUMNAS} FROM residentes WHERE id = @id`, { id: Number(req.params.id) });
+    const filas = await consultar(`SELECT ${COLUMNAS} FROM residentes WHERE id = @id`, { id: req.idRegistro });
     if (!filas.length) return res.status(404).json({ mensaje: 'El residente no existe.' });
     return res.json(filas[0]);
   } catch (err) {
@@ -72,11 +83,11 @@ router.post('/', permitirRoles(...ESCRITURA), async (req, res, next) => {
     const filas = await consultar(
       `DECLARE @sig INT = ISNULL((SELECT MAX(id) FROM residentes), 0) + 1;
        INSERT INTO residentes (codigo, nombres, apellidos, dpi, fecha_nacimiento, sexo, fecha_ingreso,
-                               tipo_sangre, alergias, condiciones_medicas, habitacion, observaciones, creado_por)
+                               tipo_sangre, alergias, condiciones_medicas, psicopatologias, medicamentos_cajon, habitacion, observaciones, creado_por)
        OUTPUT INSERTED.id, INSERTED.codigo
        VALUES ('RES-' + RIGHT('0000' + CAST(@sig AS VARCHAR(10)), 4), @nombres, @apellidos, @dpi, @fechaNacimiento, @sexo,
                ISNULL(@fechaIngreso, CAST(SYSDATETIME() AS DATE)), @tipoSangre, @alergias, @condiciones,
-               @habitacion, @observaciones, @usuarioId)`,
+               @psicopatologias, @medicamentosCajon, @habitacion, @observaciones, @usuarioId)`,
       { ...p, usuarioId: req.usuario.id }
     );
     const { id, codigo } = filas[0];
@@ -93,11 +104,12 @@ router.put('/:id', permitirRoles(...ESCRITURA), async (req, res, next) => {
     const errores = validarResidente(req.body);
     if (errores.length) return res.status(400).json({ mensaje: errores[0], errores });
 
-    const id = Number(req.params.id);
+    const id = req.idRegistro;
     const filas = await consultar(
       `UPDATE residentes SET nombres=@nombres, apellidos=@apellidos, dpi=@dpi, fecha_nacimiento=@fechaNacimiento,
          sexo=@sexo, fecha_ingreso=ISNULL(@fechaIngreso, fecha_ingreso), tipo_sangre=@tipoSangre, alergias=@alergias,
-         condiciones_medicas=@condiciones, habitacion=@habitacion, observaciones=@observaciones,
+         condiciones_medicas=@condiciones, psicopatologias=@psicopatologias,
+         medicamentos_cajon=@medicamentosCajon, habitacion=@habitacion, observaciones=@observaciones,
          actualizado_en=SYSDATETIME()
        OUTPUT INSERTED.id
        WHERE id=@id`,
@@ -115,11 +127,14 @@ router.put('/:id', permitirRoles(...ESCRITURA), async (req, res, next) => {
 // Los residentes no se eliminan: se cambia su estado (se conserva el historial).
 router.patch('/:id/estado', permitirRoles(...ESCRITURA), async (req, res, next) => {
   try {
-    const { estado, motivo } = req.body;
+    const { estado, motivo } = req.body || {};
+    if (motivo !== undefined && motivo !== null && (typeof motivo !== 'string' || motivo.length > 300)) {
+      return res.status(400).json({ mensaje: 'El motivo debe ser texto de máximo 300 caracteres.' });
+    }
     if (!ESTADOS_RESIDENTE.includes(estado)) {
       return res.status(400).json({ mensaje: `El estado debe ser uno de: ${ESTADOS_RESIDENTE.join(', ')}.` });
     }
-    const id = Number(req.params.id);
+    const id = req.idRegistro;
     const filas = await consultar(
       'UPDATE residentes SET estado=@estado, actualizado_en=SYSDATETIME() OUTPUT INSERTED.id WHERE id=@id',
       { id, estado }

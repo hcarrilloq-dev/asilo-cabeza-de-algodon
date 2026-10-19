@@ -4,9 +4,20 @@ function rutaNoEncontrada(req, res) {
 
 // eslint-disable-next-line no-unused-vars
 function manejadorErrores(err, req, res, next) {
+  // Cuerpo de la petición que no es JSON válido
+  if (err && err.type === 'entity.parse.failed') {
+    return res.status(400).json({ mensaje: 'El cuerpo de la petición no es un JSON válido.' });
+  }
+  if (err && err.type === 'entity.too.large') {
+    return res.status(413).json({ mensaje: 'La información enviada es demasiado grande.' });
+  }
   // Violación de UNIQUE en SQL Server (2627 / 2601)
   if (err && (err.number === 2627 || err.number === 2601)) {
     return res.status(409).json({ mensaje: 'Ya existe un registro con esos datos (dato duplicado).' });
+  }
+  // Violación de CHECK o de llave foránea (547): datos que no cumplen las reglas
+  if (err && err.number === 547) {
+    return res.status(400).json({ mensaje: 'Los datos no cumplen las reglas del sistema o hacen referencia a un registro inexistente.' });
   }
   console.error(err);
   return res.status(500).json({ mensaje: 'Ocurrió un error en el servidor. Intente de nuevo.' });

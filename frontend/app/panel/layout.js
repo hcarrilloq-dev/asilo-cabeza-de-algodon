@@ -2,14 +2,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { leerSesion, cerrarSesion, NOMBRE_ROL } from '@/lib/sesion';
+import { leerSesion, cerrarSesion, NOMBRE_ROL, PERMISOS } from '@/lib/sesion';
 import Algodon from '@/components/Algodon';
 
 // Opciones del menú y roles que pueden verlas (el backend también valida cada permiso)
 const MENU = [
   { ruta: '/panel', texto: 'Inicio', roles: null },
-  { ruta: '/panel/residentes', texto: 'Residentes', roles: ['Administrador', 'Recepcion', 'Medico', 'Enfermeria', 'Contabilidad'] },
-  { ruta: '/panel/usuarios', texto: 'Usuarios', roles: ['Administrador'] },
+  { ruta: '/panel/residentes', texto: 'Residentes', roles: PERMISOS.verResidentes },
+  { ruta: '/panel/usuarios', texto: 'Usuarios', roles: PERMISOS.gestionarUsuarios },
 ];
 
 export default function PanelLayout({ children }) {
@@ -18,9 +18,15 @@ export default function PanelLayout({ children }) {
   const [usuario, setUsuario] = useState(null);
 
   useEffect(() => {
-    const sesion = leerSesion();
-    if (!sesion) router.replace('/login');
-    else setUsuario(sesion.usuario);
+    const revisar = () => {
+      const sesion = leerSesion();
+      if (!sesion) router.replace('/login');
+      else setUsuario(sesion.usuario);
+    };
+    revisar();
+    // Si se cerró sesión y el usuario presiona "atrás", la página no se vuelve a mostrar
+    window.addEventListener('pageshow', revisar);
+    return () => window.removeEventListener('pageshow', revisar);
   }, [router]);
 
   if (!usuario) return <p className="contenido cargando">Cargando…</p>;
@@ -38,7 +44,7 @@ export default function PanelLayout({ children }) {
       <aside className="lateral">
         <div className="marca">
           <Algodon />
-          <span>Cabeza de<br />Algodón</span>
+          <span>SIGEVAN<br /><small>Cabeza de Algodón</small></span>
         </div>
         <nav className="menu" aria-label="Menú principal">
           {opciones.map((m) => (

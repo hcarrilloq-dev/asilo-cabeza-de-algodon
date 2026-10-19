@@ -7,7 +7,14 @@ export function guardarSesion(token, usuario) {
 export function leerSesion() {
   try {
     const s = JSON.parse(localStorage.getItem(CLAVE));
-    return s && s.token ? s : null;
+    if (!s || !s.token) return null;
+    // Si el token ya venció, se descarta la sesión
+    const datos = JSON.parse(atob(s.token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (datos.exp && datos.exp * 1000 < Date.now()) {
+      localStorage.removeItem(CLAVE);
+      return null;
+    }
+    return s;
   } catch {
     return null;
   }
@@ -19,9 +26,20 @@ export function cerrarSesion() {
 
 export const NOMBRE_ROL = {
   Administrador: 'Administrador',
-  Recepcion: 'Recepción',
-  Medico: 'Médico',
+  MedicoGeneral: 'Médico general',
+  MedicoEspecialista: 'Médico especialista',
   Enfermeria: 'Enfermería',
-  Contabilidad: 'Contabilidad',
-  Familiar: 'Familiar',
+  Fundacion: 'Fundación',
+  Laboratorio: 'Laboratorio',
+  Farmacia: 'Farmacia',
+  Familiar: 'Familiar responsable',
 };
+
+// Mismos grupos que el backend (src/config/roles.js); el backend es quien realmente valida
+export const PERMISOS = {
+  verResidentes: ['Administrador', 'MedicoGeneral', 'MedicoEspecialista', 'Enfermeria'],
+  editarResidentes: ['Administrador', 'MedicoGeneral'],
+  gestionarUsuarios: ['Administrador'],
+};
+
+export const puede = (usuario, permiso) => !!usuario && PERMISOS[permiso].includes(usuario.rol);

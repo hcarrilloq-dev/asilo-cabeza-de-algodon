@@ -2,9 +2,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import { leerSesion, NOMBRE_ROL } from '@/lib/sesion';
+import { leerSesion, NOMBRE_ROL, puede } from '@/lib/sesion';
 
-const PUEDE_VER_RESIDENTES = ['Administrador', 'Recepcion', 'Medico', 'Enfermeria', 'Contabilidad'];
 
 export default function PanelInicio() {
   const [usuario, setUsuario] = useState(null);
@@ -13,7 +12,7 @@ export default function PanelInicio() {
   useEffect(() => {
     const { usuario: u } = leerSesion() || {};
     setUsuario(u);
-    if (u && PUEDE_VER_RESIDENTES.includes(u.rol)) {
+    if (puede(u, 'verResidentes')) {
       api('/residentes').then(setResidentes).catch(() => setResidentes([]));
     }
   }, []);
@@ -29,7 +28,7 @@ export default function PanelInicio() {
           <h1>Hola, {usuario.nombres}</h1>
           <p>Ingresó como {NOMBRE_ROL[usuario.rol] || usuario.rol}.</p>
         </div>
-        {['Administrador', 'Recepcion'].includes(usuario.rol) && (
+        {puede(usuario, 'editarResidentes') && (
           <Link className="boton" href="/panel/residentes/nuevo">Registrar residente</Link>
         )}
       </div>
@@ -47,12 +46,13 @@ export default function PanelInicio() {
         <ul className="modulos">
           <li><span>Inicio de sesión y control de acceso por roles</span><span className="etiqueta si">Disponible</span></li>
           <li><span>Gestión de usuarios</span><span className="etiqueta si">Disponible</span></li>
-          <li><span>Expedientes de residentes</span><span className="etiqueta si">Disponible</span></li>
+          <li><span>Ficha de internos (psicopatologías y medicamentos de cajón)</span><span className="etiqueta si">Disponible</span></li>
           <li><span>Familiares y responsables de pago</span><span className="etiqueta no">En desarrollo</span></li>
           <li><span>Evaluaciones, solicitudes y citas médicas</span><span className="etiqueta no">En desarrollo</span></li>
-          <li><span>Medicamentos y recetas</span><span className="etiqueta no">En desarrollo</span></li>
-          <li><span>Cuotas, pagos y estado de cuenta</span><span className="etiqueta no">En desarrollo</span></li>
+          <li><span>Laboratorio y farmacia</span><span className="etiqueta no">En desarrollo</span></li>
+          <li><span>Caja: cargos, pagos, cuotas, donaciones y gastos</span><span className="etiqueta no">En desarrollo</span></li>
           <li><span>Reportes</span><span className="etiqueta no">En desarrollo</span></li>
+          <li><span>Correo al familiar al crear una solicitud</span><span className="etiqueta no">En desarrollo</span></li>
         </ul>
       </section>
     </>

@@ -43,7 +43,8 @@ export default function Login() {
         </div>
         <div>
           <h1>Asilo de Ancianos Cabeza de Algodón</h1>
-          <p>Expedientes, atención médica, citas y pagos de cada residente, en un solo lugar.</p>
+          <p className="login-sistema">SIGEVAN, sistema de administración del asilo</p>
+          <p>Fichas médicas, solicitudes a la fundación, laboratorio, farmacia y caja, en un solo lugar.</p>
         </div>
       </section>
 

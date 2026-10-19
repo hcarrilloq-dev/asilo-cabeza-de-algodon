@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
-import { leerSesion } from '@/lib/sesion';
+import { leerSesion, puede } from '@/lib/sesion';
 import FormResidente from '@/components/FormResidente';
+import Confirmar from '@/components/Confirmar';
 
 const SEXO = { F: 'Femenino', M: 'Masculino' };
 
@@ -16,12 +17,13 @@ export default function ExpedienteResidente() {
   const [aviso, setAviso] = useState(params.get('nuevo') ? 'Residente registrado correctamente.' : '');
   const [editando, setEditando] = useState(false);
   const [puedeEditar, setPuedeEditar] = useState(false);
+  const [cambio, setCambio] = useState(null); // estado al que se quiere cambiar
 
   const cargar = () => api(`/residentes/${id}`).then(setR).catch((e) => setError(e.message));
 
   useEffect(() => {
     const s = leerSesion();
-    setPuedeEditar(!!s && ['Administrador', 'Recepcion'].includes(s.usuario.rol));
+    setPuedeEditar(!!s && puede(s.usuario, 'editarResidentes'));
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -33,9 +35,8 @@ export default function ExpedienteResidente() {
     setAviso('Cambios guardados.');
   }
 
-  async function cambiarEstado(estado) {
-    const motivo = window.prompt(`Motivo del cambio a "${estado}":`);
-    if (motivo === null) return;
+  async function cambiarEstado(estado, motivo) {
+    setCambio(null);
     try {
       await api(`/residentes/${id}/estado`, { metodo: 'PATCH', datos: { estado, motivo } });
       await cargar();
@@ -70,8 +71,8 @@ export default function ExpedienteResidente() {
         {puedeEditar && (
           <div className="acciones">
             <button className="boton" onClick={() => { setAviso(''); setEditando(true); }}>Editar datos</button>
-            {r.estado === 'Activo' && <button className="boton peligro" onClick={() => cambiarEstado('Egresado')}>Registrar egreso</button>}
-            {r.estado !== 'Activo' && <button className="boton secundario" onClick={() => cambiarEstado('Activo')}>Reactivar</button>}
+            {r.estado === 'Activo' && <button className="boton peligro" onClick={() => setCambio('Egresado')}>Registrar egreso</button>}
+            {r.estado !== 'Activo' && <button className="boton secundario" onClick={() => setCambio('Activo')}>Reactivar</button>}
           </div>
         )}
       </div>
@@ -87,11 +88,25 @@ export default function ExpedienteResidente() {
           <div><dt>Fecha de ingreso</dt><dd>{r.fecha_ingreso}</dd></div>
           <div><dt>Habitación</dt><dd>{v(r.habitacion)}</dd></div>
           <div><dt>Tipo de sangre</dt><dd>{v(r.tipo_sangre)}</dd></div>
+          <div className="ancho sensible"><dt>Psicopatologías</dt><dd>{v(r.psicopatologias)}</dd></div>
+          <div className="ancho"><dt>Medicamentos de cajón</dt><dd>{v(r.medicamentos_cajon)}</dd></div>
           <div className="ancho"><dt>Alergias</dt><dd>{v(r.alergias)}</dd></div>
           <div className="ancho"><dt>Condiciones médicas</dt><dd>{v(r.condiciones_medicas)}</dd></div>
           <div className="ancho"><dt>Observaciones</dt><dd>{v(r.observaciones)}</dd></div>
         </dl>
       </section>
+
+      <Confirmar
+        abierto={!!cambio}
+        titulo={cambio === 'Egresado' ? 'Registrar egreso' : 'Reactivar interno'}
+        mensaje={cambio === 'Egresado'
+          ? `${r.nombres} ${r.apellidos} dejará de aparecer en la lista de internos activos. Su ficha y su historial se conservan.`
+          : `${r.nombres} ${r.apellidos} volverá a la lista de internos activos.`}
+        textoConfirmar={cambio === 'Egresado' ? 'Registrar egreso' : 'Reactivar'}
+        pedirMotivo
+        onConfirmar={(motivo) => cambiarEstado(cambio, motivo)}
+        onCancelar={() => setCambio(null)}
+      />
     </>
   );
 }

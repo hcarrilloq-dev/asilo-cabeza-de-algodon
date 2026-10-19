@@ -1,6 +1,6 @@
-# Sistema de Gestión del Asilo de Ancianos "Cabeza de Algodón"
+# SIGEVAN: Sistema para Administración del Asilo de Ancianos "Cabeza de Algodón"
 
-Proyecto del curso **Análisis de Sistemas II**. Aplicación web para administrar los expedientes de los residentes, la atención médica (evaluaciones internas, solicitudes y citas con la fundación), medicamentos, pagos y estados de cuenta del asilo.
+Proyecto del curso **Análisis de Sistemas II**. Aplicación web para llevar la ficha médica de cada interno, las solicitudes a especialistas de la fundación, las visitas médicas con sus exámenes de laboratorio y medicamentos de farmacia, y el manejo de caja del asilo (cargos al familiar con el descuento de la fundación, cuotas, donaciones, gastos y deuda con la fundación).
 
 ## Tecnologías
 
@@ -17,7 +17,7 @@ Proyecto del curso **Análisis de Sistemas II**. Aplicación web para administra
 ```
 asilo-cabeza-de-algodon/
 ├── database/
-│   └── script.sql        Script completo de la base de datos
+│   └── script.sql        Script de la base de datos (borra y crea, con datos de ejemplo)
 ├── backend/              API REST (puerto 4000)
 │   ├── src/              Código fuente (rutas, middleware, validaciones)
 │   ├── scripts/seed.js   Crea los usuarios de prueba
@@ -29,11 +29,12 @@ asilo-cabeza-de-algodon/
 
 | Módulo | Estado |
 |--------|--------|
-| Base de datos completa (22 tablas + vista de estado de cuenta) | Implementado |
-| Inicio de sesión, roles y auditoría de accesos | Implementado |
+| Base de datos completa según el enunciado (v2.0) | Implementado |
+| Inicio de sesión, 8 roles, expiración de sesión y auditoría | Implementado |
 | Gestión de usuarios (solo Administrador) | Implementado |
-| Expedientes de residentes (registrar, buscar, editar, egreso) | Implementado |
-| Familiares, citas médicas, medicamentos, pagos, reportes | En desarrollo |
+| Ficha del interno (psicopatologías, medicamentos de cajón, egreso) | Implementado |
+| Familiares, solicitudes, fundación, visitas, laboratorio, farmacia | En desarrollo |
+| Caja (cargos, pagos, cuotas, donaciones, gastos), reportes y correo | En desarrollo |
 
 ---
 
@@ -62,18 +63,15 @@ El backend se conecta por TCP/IP con un usuario de SQL Server, así que hay que 
 
 ### 3. Crear la base de datos
 
-1. Abrir `database/script.sql` en SSMS y ejecutarlo completo (**F5**). Crea la base `AsiloCabezaAlgodon` con todas sus tablas y catálogos.
-2. Crear el usuario que usará la aplicación (cambiar la contraseña por una propia):
+1. Crear (una sola vez) el login que usará la aplicación, cambiando la contraseña por una propia:
 
 ```sql
 CREATE LOGIN asilo_app WITH PASSWORD = 'Una_Contraseña_Segura_1';
-GO
-USE AsiloCabezaAlgodon;
-CREATE USER asilo_app FOR LOGIN asilo_app;
-ALTER ROLE db_datareader ADD MEMBER asilo_app;
-ALTER ROLE db_datawriter ADD MEMBER asilo_app;
-GO
 ```
+
+2. Abrir `database/script.sql` en SSMS y ejecutarlo completo (**F5**). Crea la base `AsiloCabezaAlgodon` con sus tablas, vistas, catálogos y datos de ejemplo, y da permisos al usuario `asilo_app`.
+
+> **Atención:** si la base ya existe, el script la borra y la crea de nuevo. Sirve para instalar desde cero o reiniciar el ambiente de pruebas. Después de ejecutarlo hay que correr `npm run seed` otra vez.
 
 ### 4. Configurar y levantar el backend
 
@@ -112,10 +110,13 @@ Por seguridad, **las contraseñas no se guardan en este repositorio**. El comand
 | Rol | Correo |
 |-----|--------|
 | Administrador | admin@cabezadealgodon.com |
-| Recepción | recepcion@cabezadealgodon.com |
-| Médico | medico@cabezadealgodon.com |
+| Médico general | medico.general@cabezadealgodon.com |
+| Médico especialista | especialista@cabezadealgodon.com |
 | Enfermería | enfermeria@cabezadealgodon.com |
-| Contabilidad | contabilidad@cabezadealgodon.com |
+| Fundación | fundacion@cabezadealgodon.com |
+| Laboratorio | laboratorio@cabezadealgodon.com |
+| Farmacia | farmacia@cabezadealgodon.com |
+| Familiar responsable | familiar@cabezadealgodon.com |
 
 La contraseña de prueba se entrega al auditor SQA por un canal privado.
 
@@ -129,18 +130,19 @@ npm install
 npm test
 ```
 
-Resultado esperado: `Tests: 35 passed`.
+Resultado esperado: `Tests: 51 passed`.
 
 ## Permisos por rol
 
-| Acción | Admin | Recepción | Médico | Enfermería | Contabilidad | Familiar |
-|--------|:-----:|:---------:|:------:|:----------:|:------------:|:--------:|
-| Gestionar usuarios | ✔ | | | | | |
-| Ver residentes | ✔ | ✔ | ✔ | ✔ | ✔ | |
-| Registrar / editar residentes | ✔ | ✔ | | | | |
-| Cambiar estado (egreso) | ✔ | ✔ | | | | |
+Los ocho roles salen del enunciado y del análisis (se agregó Enfermería, que acompaña al interno a la cita).
 
-No existe registro público: solo el Administrador crea cuentas. Los permisos se validan en el backend, no solo ocultando botones.
+| Acción | Admin | Méd. general | Especialista | Enfermería | Fundación | Laboratorio | Farmacia | Familiar |
+|--------|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|
+| Gestionar usuarios | ✔ | | | | | | | |
+| Ver ficha del interno (incluye psicopatologías) | ✔ | ✔ | ✔ | ✔ | | | | |
+| Registrar / editar internos, egreso | ✔ | ✔ | | | | | | |
+
+No existe registro público: solo el Administrador crea cuentas. Los permisos se validan en el backend (`backend/src/config/roles.js`), no solo ocultando botones. La Fundación, el Laboratorio y la Farmacia no tienen acceso a la ficha clínica.
 
 ## Endpoints principales de la API
 
@@ -154,6 +156,8 @@ No existe registro público: solo el Administrador crea cuentas. Los permisos se
 | GET / POST | `/api/residentes` | Listar (con `?buscar=` y `?estado=`) / registrar |
 | GET / PUT | `/api/residentes/:id` | Ver / editar expediente |
 | PATCH | `/api/residentes/:id/estado` | Cambiar estado (Activo, Egresado, Fallecido) |
+
+Una petición con datos inválidos, un cuerpo que no es JSON o un identificador no numérico responde **400** con un mensaje, y el servidor sigue activo.
 
 ## Solución de problemas
 

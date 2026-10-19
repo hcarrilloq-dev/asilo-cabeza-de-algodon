@@ -44,6 +44,31 @@ describe('Validación de residentes', () => {
     expect(errores).toContain('La fecha de ingreso no puede ser futura.');
   });
 
+  test('rechaza nacimiento en el futuro', () => {
+    const errores = v.validarResidente({ ...residenteValido, fecha_nacimiento: '2027-01-01' }, HOY);
+    expect(errores).toContain('La fecha de nacimiento no puede ser futura.');
+  });
+
+  test('rechaza 300 años de edad', () => {
+    const errores = v.validarResidente({ ...residenteValido, fecha_nacimiento: '1726-01-01' }, HOY);
+    expect(errores).toContain('La fecha de nacimiento no es realista.');
+  });
+
+  test('rechaza 31 de septiembre', () => {
+    const errores = v.validarResidente({ ...residenteValido, fecha_nacimiento: '1950-09-31' }, HOY);
+    expect(errores[0]).toMatch(/no es válida/);
+  });
+
+  test('rechaza ingreso anterior al nacimiento', () => {
+    const errores = v.validarResidente({ ...residenteValido, fecha_nacimiento: '1945-05-10', fecha_ingreso: '1940-01-01' }, HOY);
+    expect(errores).toContain('La fecha de ingreso no puede ser anterior a la fecha de nacimiento.');
+  });
+
+  test('rechaza campos de texto con números u objetos', () => {
+    const errores = v.validarResidente({ ...residenteValido, psicopatologias: 123 }, HOY);
+    expect(errores[0]).toMatch(/debe ser texto/);
+  });
+
   test('rechaza fecha inexistente', () => {
     const errores = v.validarResidente({ ...residenteValido, fecha_nacimiento: '1945-02-30' }, HOY);
     expect(errores[0]).toMatch(/no es válida/);

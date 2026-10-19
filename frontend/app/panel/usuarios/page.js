@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { leerSesion, NOMBRE_ROL } from '@/lib/sesion';
 
-const ROLES = ['Administrador', 'Recepcion', 'Medico', 'Enfermeria', 'Contabilidad', 'Familiar'];
-const NUEVO = { nombres: '', apellidos: '', email: '', password: '', rol: 'Recepcion' };
+const ROLES = Object.keys(NOMBRE_ROL);
+const NUEVO = { nombres: '', apellidos: '', email: '', password: '', rol: 'MedicoGeneral' };
 
 export default function Usuarios() {
   const router = useRouter();

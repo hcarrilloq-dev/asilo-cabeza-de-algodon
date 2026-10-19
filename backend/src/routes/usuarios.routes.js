@@ -2,13 +2,14 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { consultar } = require('../config/db');
 const { verificarToken, permitirRoles } = require('../middleware/auth');
-const { validarUsuario } = require('../validators/validaciones');
+const { validarUsuario, idValido } = require('../validators/validaciones');
+const { PERMISOS } = require('../config/roles');
 const { registrarAuditoria } = require('../utils/auditoria');
 
 const router = express.Router();
 
 // No existe registro público: solo el Administrador crea usuarios.
-router.use(verificarToken, permitirRoles('Administrador'));
+router.use(verificarToken, permitirRoles(...PERMISOS.gestionarUsuarios));
 
 // GET /api/usuarios
 router.get('/', async (req, res, next) => {
@@ -51,8 +52,9 @@ router.post('/', async (req, res, next) => {
 // PATCH /api/usuarios/:id/estado   { activo: true|false }
 router.patch('/:id/estado', async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
-    if (typeof req.body.activo !== 'boolean') return res.status(400).json({ mensaje: 'Indique activo: true o false.' });
+    const id = idValido(req.params.id);
+    if (!id) return res.status(400).json({ mensaje: 'El identificador no es válido.' });
+    if (!req.body || typeof req.body.activo !== 'boolean') return res.status(400).json({ mensaje: 'Indique activo: true o false.' });
     if (id === req.usuario.id && req.body.activo === false) {
       return res.status(400).json({ mensaje: 'No puede desactivar su propio usuario.' });
     }

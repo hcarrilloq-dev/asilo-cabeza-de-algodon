@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 const VACIO = {
   nombres: '', apellidos: '', dpi: '', fecha_nacimiento: '', sexo: '', fecha_ingreso: '',
-  tipo_sangre: '', habitacion: '', alergias: '', condiciones_medicas: '', observaciones: '',
+  tipo_sangre: '', habitacion: '', psicopatologias: '', medicamentos_cajon: '', alergias: '', condiciones_medicas: '', observaciones: '',
 };
 const TIPOS_SANGRE = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
@@ -73,7 +73,7 @@ export default function FormResidente({ inicial, textoBoton, onGuardar, onCancel
       </fieldset>
 
       <fieldset>
-        <legend>Ingreso y salud</legend>
+        <legend>Ingreso y ficha médica</legend>
         <div className="campo">
           <label htmlFor="fecha_ingreso">Fecha de ingreso</label>
           <input id="fecha_ingreso" name="fecha_ingreso" type="date" value={datos.fecha_ingreso} onChange={cambiar} max={hoy} />
@@ -89,6 +89,16 @@ export default function FormResidente({ inicial, textoBoton, onGuardar, onCancel
             <option value="">No registrado</option>
             {TIPOS_SANGRE.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
+        </div>
+        <div className="campo ancho">
+          <label htmlFor="psicopatologias">Psicopatologías</label>
+          <textarea id="psicopatologias" name="psicopatologias" value={datos.psicopatologias} onChange={cambiar} maxLength={500} />
+          <small>Información confidencial: solo la ve el personal médico del asilo y el especialista</small>
+        </div>
+        <div className="campo ancho">
+          <label htmlFor="medicamentos_cajon">Medicamentos de cajón</label>
+          <textarea id="medicamentos_cajon" name="medicamentos_cajon" value={datos.medicamentos_cajon} onChange={cambiar} maxLength={500} />
+          <small>Medicamentos que se le aplican habitualmente</small>
         </div>
         <div className="campo ancho">
           <label htmlFor="alergias">Alergias</label>

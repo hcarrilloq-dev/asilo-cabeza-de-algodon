@@ -1,7 +1,7 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Asilo Cabeza de Algodón',
+  title: 'SIGEVAN | Asilo Cabeza de Algodón',
   description: 'Sistema de gestión del Asilo de Ancianos Cabeza de Algodón',
 };
 

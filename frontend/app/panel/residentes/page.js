@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
-import { leerSesion } from '@/lib/sesion';
+import { leerSesion, puede } from '@/lib/sesion';
 
 function edad(fecha) {
   const n = new Date(`${fecha}T00:00:00`);
@@ -21,7 +21,7 @@ export default function Residentes() {
 
   useEffect(() => {
     const s = leerSesion();
-    setPuedeRegistrar(!!s && ['Administrador', 'Recepcion'].includes(s.usuario.rol));
+    setPuedeRegistrar(!!s && puede(s.usuario, 'editarResidentes'));
   }, []);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function Residentes() {
       <div className="encabezado">
         <div>
           <h1>Residentes</h1>
-          <p>Expedientes de las personas que viven en el asilo.</p>
+          <p>Ficha de cada interno del asilo.</p>
         </div>
         {puedeRegistrar && <Link className="boton" href="/panel/residentes/nuevo">Registrar residente</Link>}
       </div>
