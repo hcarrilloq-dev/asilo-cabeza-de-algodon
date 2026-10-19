@@ -31,10 +31,17 @@ asilo-cabeza-de-algodon/
 |--------|--------|
 | Base de datos completa según el enunciado (v2.0) | Implementado |
 | Inicio de sesión, 8 roles, expiración de sesión y auditoría | Implementado |
-| Gestión de usuarios (solo Administrador) | Implementado |
-| Ficha del interno (psicopatologías, medicamentos de cajón, egreso) | Implementado |
-| Familiares, solicitudes, fundación, visitas, laboratorio, farmacia | En desarrollo |
-| Caja (cargos, pagos, cuotas, donaciones, gastos), reportes y correo | En desarrollo |
+| Ficha del interno (psicopatologías, medicamentos de cajón, historial médico) | Implementado |
+| Familiares y familiar responsable de pagos | Implementado |
+| Solicitudes del médico general con enfermero(a) acompañante | Implementado |
+| Asignación de médico y horario por la fundación | Implementado |
+| Visita médica (diagnóstico, exámenes, medicamentos, cierre) | Implementado |
+| Laboratorio (resultados) y farmacia (entregas) | Implementado |
+| Enfermería (aplicación de medicamentos) | Implementado |
+| Caja: cargos con descuento, pagos, cuotas, donaciones, gastos, deuda con la fundación | Implementado |
+| Correo al familiar al crear la solicitud (con reintento si falla) | Implementado |
+| Portal del familiar (estado de cuenta y citas) | Implementado |
+| Reportes y script de respaldo | En desarrollo |
 
 ---
 
@@ -83,6 +90,8 @@ copy .env.example .env      # en Mac/Linux: cp .env.example .env
 
 Abrir `backend/.env` y completar como mínimo `DB_PASSWORD` (la del paso 3), `JWT_SECRET` (cualquier texto largo) y `SEED_PASSWORD` (contraseña de los usuarios de prueba). Si SQL Server es una instancia con nombre (por ejemplo `SQLEXPRESS`), escribir `DB_INSTANCE=SQLEXPRESS`.
 
+Opcional: para que el sistema envíe los correos al familiar, completar las variables `SMTP_*` (con Gmail se usa `smtp.gmail.com`, puerto 587 y una *contraseña de aplicación*). Si se dejan vacías, los correos quedan como **Pendiente** y se pueden reintentar desde el menú *Correos a familiares*.
+
 ```bash
 npm run seed    # crea los usuarios de prueba (uno por rol)
 npm run dev     # inicia la API en http://localhost:4000/api
@@ -130,32 +139,51 @@ npm install
 npm test
 ```
 
-Resultado esperado: `Tests: 51 passed`.
+Resultado esperado: `Tests: 83 passed`.
 
 ## Permisos por rol
 
 Los ocho roles salen del enunciado y del análisis (se agregó Enfermería, que acompaña al interno a la cita).
 
-| Acción | Admin | Méd. general | Especialista | Enfermería | Fundación | Laboratorio | Farmacia | Familiar |
-|--------|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|:-----:|
-| Gestionar usuarios | ✔ | | | | | | | |
-| Ver ficha del interno (incluye psicopatologías) | ✔ | ✔ | ✔ | ✔ | | | | |
-| Registrar / editar internos, egreso | ✔ | ✔ | | | | | | |
+| Rol | Qué hace en el sistema |
+|-----|------------------------|
+| Administrador | Usuarios, internos, familiares, caja completa, correos y configuración (descuentos y catálogos) |
+| Médico general | Fichas de internos, historial médico y solicitudes a especialistas con enfermero(a) acompañante |
+| Médico especialista | Sus citas; abre la visita desde la cita, ve la ficha, registra diagnóstico, exámenes y medicamentos |
+| Enfermería | Fichas, citas que acompaña y registro de aplicación de medicamentos |
+| Fundación | Solicitudes por asignar (sin ficha clínica) y cuenta del asilo con la fundación |
+| Laboratorio | Exámenes asignados en las visitas: registra resultado y precio (sin diagnóstico ni ficha) |
+| Farmacia | Medicamentos indicados en las visitas: registra la entrega (sin diagnóstico ni ficha) |
+| Familiar responsable | Estado de cuenta y citas de su familiar |
 
-No existe registro público: solo el Administrador crea cuentas. Los permisos se validan en el backend (`backend/src/config/roles.js`), no solo ocultando botones. La Fundación, el Laboratorio y la Farmacia no tienen acceso a la ficha clínica.
+No existe registro público: solo el Administrador crea cuentas. Los permisos se validan en el backend (`backend/src/config/roles.js`), no solo ocultando botones.
+
+## Reglas de negocio implementadas
+
+- No hay visita sin cita: la visita se abre desde la cita que asignó la fundación, y la cita solo desde una solicitud del médico general.
+- Una visita no se puede cerrar sin diagnóstico, y una vez cerrada no se modifica.
+- Una receta exige medicamento, cantidad entera mayor que cero, dosis, frecuencia y tiempo de aplicación.
+- La consulta, cada examen y cada medicamento entregado generan un cargo a la cuenta del familiar responsable **con el descuento de la fundación** (configurable). Lo mismo se registra como deuda con la fundación por cita.
+- Los pagos no aceptan montos negativos, cero, con más de 2 decimales ni mayores que el saldo del cargo. Un pago enviado dos veces (doble clic) se registra una sola vez.
+- Estados de los cargos: Pendiente, Parcial, Cancelado y Vencido (al pasar la fecha de vencimiento).
+- Al crear una solicitud se guarda un correo para el familiar responsable; si no se puede enviar, la solicitud igual se guarda y el correo queda pendiente para reenvío.
 
 ## Endpoints principales de la API
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/api/salud` | Verifica que la API esté encendida |
-| POST | `/api/auth/login` | Inicia sesión y devuelve el token |
-| GET | `/api/auth/perfil` | Datos del usuario con sesión |
-| GET / POST | `/api/usuarios` | Listar / crear usuarios (Administrador) |
-| PATCH | `/api/usuarios/:id/estado` | Activar o desactivar un usuario |
-| GET / POST | `/api/residentes` | Listar (con `?buscar=` y `?estado=`) / registrar |
-| GET / PUT | `/api/residentes/:id` | Ver / editar expediente |
-| PATCH | `/api/residentes/:id/estado` | Cambiar estado (Activo, Egresado, Fallecido) |
+| Ruta | Descripción |
+|------|-------------|
+| `POST /api/auth/login`, `GET /api/auth/perfil` | Inicio de sesión y datos del usuario |
+| `/api/usuarios` | Usuarios (Administrador) |
+| `/api/residentes`, `/api/residentes/:id/historial` | Fichas de internos e historial médico |
+| `/api/familiares`, `/api/residentes/:id/familiares` | Familiares y vínculo con el interno |
+| `/api/solicitudes`, `POST /api/solicitudes/:id/asignar` | Solicitudes a especialistas y asignación de la fundación |
+| `/api/citas`, `POST /api/citas/:id/visita` | Citas y apertura de la visita médica |
+| `/api/visitas/:id` (+ `/examenes`, `/medicamentos`, `/cerrar`) | Visita médica |
+| `/api/laboratorio/examenes`, `/api/farmacia/medicamentos`, `/api/enfermeria/medicamentos` | Laboratorio, farmacia y enfermería |
+| `/api/caja/...` | Cargos, pagos, cuotas, donaciones, gastos, fundación y resumen |
+| `/api/portal` | Portal del familiar |
+| `/api/notificaciones` | Correos a familiares y reenvío |
+| `/api/catalogos` | Especialidades, médicos, enfermeros, medicamentos y descuentos |
 
 Una petición con datos inválidos, un cuerpo que no es JSON o un identificador no numérico responde **400** con un mensaje, y el servidor sigue activo.
 

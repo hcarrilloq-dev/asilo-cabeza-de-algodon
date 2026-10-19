@@ -40,6 +40,19 @@ export const PERMISOS = {
   verResidentes: ['Administrador', 'MedicoGeneral', 'MedicoEspecialista', 'Enfermeria'],
   editarResidentes: ['Administrador', 'MedicoGeneral'],
   gestionarUsuarios: ['Administrador'],
+  verFamiliares: ['Administrador'],
+  editarFamiliares: ['Administrador'],
+  crearSolicitud: ['MedicoGeneral'],
+  verSolicitudes: ['Administrador', 'MedicoGeneral', 'Enfermeria', 'Fundacion'],
+  asignarCita: ['Fundacion'],
+  verCitas: ['Administrador', 'MedicoGeneral', 'MedicoEspecialista', 'Enfermeria', 'Fundacion'],
+  atenderVisita: ['MedicoEspecialista'],
+  laboratorio: ['Laboratorio'],
+  farmacia: ['Farmacia'],
+  enfermeria: ['Enfermeria'],
+  caja: ['Administrador'],
+  verDeudaFundacion: ['Administrador', 'Fundacion'],
+  configuracion: ['Administrador'],
 };
 
 export const puede = (usuario, permiso) => !!usuario && PERMISOS[permiso].includes(usuario.rol);

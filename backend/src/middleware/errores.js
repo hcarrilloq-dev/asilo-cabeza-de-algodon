@@ -4,6 +4,10 @@ function rutaNoEncontrada(req, res) {
 
 // eslint-disable-next-line no-unused-vars
 function manejadorErrores(err, req, res, next) {
+  // Errores de negocio lanzados con fallo(status, mensaje)
+  if (err && err.esFallo) {
+    return res.status(err.status).json({ mensaje: err.message });
+  }
   // Cuerpo de la petición que no es JSON válido
   if (err && err.type === 'entity.parse.failed') {
     return res.status(400).json({ mensaje: 'El cuerpo de la petición no es un JSON válido.' });

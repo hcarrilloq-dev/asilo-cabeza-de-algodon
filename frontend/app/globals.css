@@ -173,3 +173,27 @@ tbody tr:hover { background: #f8fafb; }
 .dialogo form { display: flex; flex-direction: column; gap: 1rem; }
 .dialogo p { margin: 0; color: var(--tinta-suave); }
 .sensible { border-left: 3px solid var(--aviso); padding-left: .75rem; }
+
+/* ---------- Etiquetas y piezas de los módulos ---------- */
+.etiqueta.aviso { background: var(--aviso-suave); color: var(--aviso); }
+.etiqueta.info { background: #e1ebf5; color: #2a5582; }
+.etiqueta.peligro { background: var(--peligro-suave); color: var(--peligro); }
+.mensaje { position: relative; margin-bottom: 1rem; }
+.cerrar-aviso { position: absolute; top: .35rem; right: .5rem; background: none; border: none; font-size: 1.3rem; cursor: pointer; color: inherit; }
+.pestanas { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.pestanas button { font: inherit; padding: .45rem .9rem; border-radius: 999px; border: 1px solid var(--borde); background: var(--superficie); color: var(--tinta); cursor: pointer; }
+.pestanas button[aria-pressed="true"] { background: var(--primario); border-color: var(--primario); color: #fff; font-weight: 700; }
+.seccion { margin-top: 1.75rem; }
+.seccion > h2 { margin-bottom: .75rem; }
+.fila-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .75rem; align-items: end; }
+.tarjetas { display: grid; gap: 1rem; }
+.tarjeta { background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); padding: 1.1rem 1.25rem; }
+.tarjeta h3 { margin: 0 0 .35rem; font-size: 1.05rem; }
+.tarjeta .meta { color: var(--tinta-suave); font-size: .95rem; margin: 0 0 .6rem; }
+.tarjeta .acciones { margin-top: .75rem; }
+.numero { text-align: right; font-variant-numeric: tabular-nums; }
+.total { font-weight: 700; }
+.texto-suave { color: var(--tinta-suave); }
+td.ajustar, .ajustar { white-space: normal; min-width: 14rem; }
+.pestana-enlace { padding: .45rem .9rem; border-radius: 999px; border: 1px solid var(--borde); background: var(--superficie); color: var(--tinta); text-decoration: none; }
+.pestana-enlace.activa { background: var(--primario); border-color: var(--primario); color: #fff; font-weight: 700; }

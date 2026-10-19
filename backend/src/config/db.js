@@ -46,3 +46,29 @@ async function consultar(texto, params = {}) {
 }
 
 module.exports = { sql, obtenerPool, consultar };
+
+/**
+ * Ejecuta varias consultas dentro de una transacción. Si algo falla, se deshace todo.
+ * Uso: await transaccion(async (q) => { await q('INSERT ...', {..}); ... })
+ */
+async function transaccion(trabajo) {
+  const pool = await obtenerPool();
+  const tx = new sql.Transaction(pool);
+  await tx.begin();
+  const q = async (texto, params = {}) => {
+    const request = new sql.Request(tx);
+    for (const [nombre, valor] of Object.entries(params)) request.input(nombre, valor === undefined ? null : valor);
+    const r = await request.query(texto);
+    return r.recordset || [];
+  };
+  try {
+    const resultado = await trabajo(q);
+    await tx.commit();
+    return resultado;
+  } catch (err) {
+    try { await tx.rollback(); } catch { /* ya revertida */ }
+    throw err;
+  }
+}
+
+module.exports.transaccion = transaccion;

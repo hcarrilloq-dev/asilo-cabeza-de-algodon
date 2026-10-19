@@ -6,6 +6,8 @@ import { api } from '@/lib/api';
 import { leerSesion, puede } from '@/lib/sesion';
 import FormResidente from '@/components/FormResidente';
 import Confirmar from '@/components/Confirmar';
+import SeccionFamiliares from '@/components/SeccionFamiliares';
+import SeccionHistorial from '@/components/SeccionHistorial';
 
 const SEXO = { F: 'Femenino', M: 'Masculino' };
 
@@ -18,12 +20,14 @@ export default function ExpedienteResidente() {
   const [editando, setEditando] = useState(false);
   const [puedeEditar, setPuedeEditar] = useState(false);
   const [cambio, setCambio] = useState(null); // estado al que se quiere cambiar
+  const [rol, setRol] = useState(null);
 
   const cargar = () => api(`/residentes/${id}`).then(setR).catch((e) => setError(e.message));
 
   useEffect(() => {
     const s = leerSesion();
     setPuedeEditar(!!s && puede(s.usuario, 'editarResidentes'));
+    setRol(s ? s.usuario.rol : null);
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -68,9 +72,13 @@ export default function ExpedienteResidente() {
           <h1>{r.nombres} {r.apellidos}</h1>
           <p>{r.codigo} <span className={`etiqueta ${r.estado}`}>{r.estado}</span></p>
         </div>
-        {puedeEditar && (
+        {(puedeEditar || rol === 'MedicoGeneral') && (
           <div className="acciones">
-            <button className="boton" onClick={() => { setAviso(''); setEditando(true); }}>Editar datos</button>
+            {rol === 'MedicoGeneral' && r.estado === 'Activo' && (
+              <Link className="boton" href={`/panel/solicitudes/nueva?residente=${r.id}`}>Referir a especialista</Link>
+            )}
+            {rol === 'Administrador' && <Link className="boton secundario" href={`/panel/caja/cuentas?residente=${r.id}`}>Estado de cuenta</Link>}
+            <button className="boton secundario" onClick={() => { setAviso(''); setEditando(true); }}>Editar datos</button>
             {r.estado === 'Activo' && <button className="boton peligro" onClick={() => setCambio('Egresado')}>Registrar egreso</button>}
             {r.estado !== 'Activo' && <button className="boton secundario" onClick={() => setCambio('Activo')}>Reactivar</button>}
           </div>
@@ -95,6 +103,9 @@ export default function ExpedienteResidente() {
           <div className="ancho"><dt>Observaciones</dt><dd>{v(r.observaciones)}</dd></div>
         </dl>
       </section>
+
+      {rol && <SeccionFamiliares residenteId={r.id} puedeEditar={rol === 'Administrador'} />}
+      {rol && <SeccionHistorial residenteId={r.id} />}
 
       <Confirmar
         abierto={!!cambio}
