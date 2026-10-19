@@ -6,7 +6,7 @@ Proyecto del curso **Análisis de Sistemas II**. Aplicación web para administra
 
 | Capa | Tecnología |
 |------|------------|
-| Frontend | Next.js 14 (React 18) |
+| Frontend | Next.js 16 (React 19) |
 | Backend | Node.js + Express (API REST) |
 | Base de datos | Microsoft SQL Server 2019 / 2022 |
 | Seguridad | JWT, contraseñas cifradas con bcrypt, control de acceso por roles |
