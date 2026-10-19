@@ -15,11 +15,11 @@ export default function NuevoResidente() {
     <>
       <div className="encabezado">
         <div>
-          <h1>Registrar residente</h1>
+          <h1>Registrar interno</h1>
           <p>Los campos con <span className="requerido">*</span> son obligatorios.</p>
         </div>
       </div>
-      <FormResidente textoBoton="Registrar residente" onGuardar={guardar} onCancelar={() => router.push('/panel/residentes')} />
+      <FormResidente textoBoton="Registrar interno" onGuardar={guardar} onCancelar={() => router.push('/panel/residentes')} />
     </>
   );
 }

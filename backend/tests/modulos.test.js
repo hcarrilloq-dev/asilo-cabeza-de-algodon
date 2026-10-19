@@ -209,3 +209,38 @@ describe('Familiares', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('Reportes', () => {
+  test('los reportes financieros son solo del Administrador', async () => {
+    for (const ruta of ['costos-citas', 'cobros', 'pagos-fundacion', 'entradas']) {
+      const res = await request(app).get(`/api/reportes/${ruta}`).set('Authorization', token('MedicoGeneral'));
+      expect(res.status).toBe(403);
+    }
+  });
+
+  test('la fundación no ve el reporte de análisis médicos', async () => {
+    const res = await request(app).get('/api/reportes/analisis-medicos?residente_id=1').set('Authorization', token('Fundacion'));
+    expect(res.status).toBe(403);
+  });
+
+  test('análisis médicos exige el interno', async () => {
+    const res = await request(app).get('/api/reportes/analisis-medicos').set('Authorization', token('MedicoGeneral'));
+    expect(res.status).toBe(400);
+  });
+
+  test('rango de fechas invertido responde 400', async () => {
+    const res = await request(app).get('/api/reportes/entradas?desde=2026-10-31&hasta=2026-10-01').set('Authorization', token('Administrador'));
+    expect(res.status).toBe(400);
+  });
+
+  test('reporte de entradas suma donaciones y cobros', async () => {
+    consultar.mockResolvedValueOnce([
+      { origen: 'Donación', detalle: 'Gobierno', monto: 1000 },
+      { origen: 'Donación', detalle: 'Particular', monto: 250.5 },
+      { origen: 'Cobro', detalle: 'Cuota', monto: 1500 },
+    ]);
+    const res = await request(app).get('/api/reportes/entradas').set('Authorization', token('Administrador'));
+    expect(res.status).toBe(200);
+    expect(res.body.totales).toEqual({ donaciones: 1250.5, cobros: 1500, total: 2750.5 });
+  });
+});

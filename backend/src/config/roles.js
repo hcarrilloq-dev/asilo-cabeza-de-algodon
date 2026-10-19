@@ -42,6 +42,8 @@ const PERMISOS = {
   portalFamiliar: [FAMILIAR],
   catalogos: [ADMIN, MEDICO_GENERAL, ESPECIALISTA, ENFERMERIA, FUNDACION, LABORATORIO, FARMACIA],
   configuracion: [ADMIN],
+  reportesMedicos: [ADMIN, MEDICO_GENERAL],
+  reportesFinancieros: [ADMIN],
 };
 
 module.exports = { ROLES, TODOS, PERMISOS };

@@ -5,7 +5,10 @@ import { useEffect, useRef, useState } from 'react';
  * Ventana de confirmación para acciones que no se pueden deshacer fácilmente.
  * Reemplaza los cuadros del navegador (alert / prompt).
  */
-export default function Confirmar({ abierto, titulo, mensaje, textoConfirmar, pedirMotivo = false, onConfirmar, onCancelar }) {
+export default function Confirmar({
+  abierto, titulo, mensaje, textoConfirmar, pedirMotivo = false, motivoObligatorio = true, etiquetaMotivo = 'Motivo',
+  estiloConfirmar = 'peligro', onConfirmar, onCancelar,
+}) {
   const [motivo, setMotivo] = useState('');
   const refDialogo = useRef(null);
 
@@ -23,12 +26,12 @@ export default function Confirmar({ abierto, titulo, mensaje, textoConfirmar, pe
         <p>{mensaje}</p>
         {pedirMotivo && (
           <div className="campo">
-            <label htmlFor="motivo-confirmar">Motivo</label>
-            <textarea id="motivo-confirmar" value={motivo} onChange={(e) => setMotivo(e.target.value)} maxLength={300} required />
+            <label htmlFor="motivo-confirmar">{etiquetaMotivo}</label>
+            <textarea id="motivo-confirmar" value={motivo} onChange={(e) => setMotivo(e.target.value)} maxLength={300} required={motivoObligatorio} />
           </div>
         )}
         <div className="acciones">
-          <button className="boton peligro" type="submit" disabled={pedirMotivo && !motivo.trim()}>{textoConfirmar}</button>
+          <button className={`boton ${estiloConfirmar}`} type="submit" disabled={pedirMotivo && motivoObligatorio && !motivo.trim()}>{textoConfirmar}</button>
           <button className="boton secundario" type="button" onClick={onCancelar}>Cancelar</button>
         </div>
       </form>

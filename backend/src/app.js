@@ -12,6 +12,7 @@ const atencionRoutes = require('./routes/atencion.routes');
 const cajaRoutes = require('./routes/caja.routes');
 const portalRoutes = require('./routes/portal.routes');
 const notificacionesRoutes = require('./routes/notificaciones.routes');
+const reportesRoutes = require('./routes/reportes.routes');
 const { rutaNoEncontrada, manejadorErrores } = require('./middleware/errores');
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api/solicitudes', solicitudesRoutes);
 app.use('/api/caja', cajaRoutes);
 app.use('/api/portal', portalRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
+app.use('/api/reportes', reportesRoutes);
 app.use('/api', familiaresRoutes);
 app.use('/api', atencionRoutes);
 

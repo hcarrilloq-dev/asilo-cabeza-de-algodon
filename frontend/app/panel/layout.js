@@ -17,6 +17,7 @@ const MENU = [
   { ruta: '/panel/enfermeria', texto: 'Medicamentos a aplicar', roles: PERMISOS.enfermeria },
   { ruta: '/panel/caja', texto: 'Caja', roles: PERMISOS.caja },
   { ruta: '/panel/caja/fundacion', texto: 'Cuenta con la fundación', roles: ['Fundacion'] },
+  { ruta: '/panel/reportes', texto: 'Reportes', roles: ['Administrador', 'MedicoGeneral'] },
   { ruta: '/panel/notificaciones', texto: 'Correos a familiares', roles: PERMISOS.configuracion },
   { ruta: '/panel/usuarios', texto: 'Usuarios', roles: PERMISOS.gestionarUsuarios },
   { ruta: '/panel/configuracion', texto: 'Configuración', roles: PERMISOS.configuracion },

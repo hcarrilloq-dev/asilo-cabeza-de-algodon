@@ -79,7 +79,7 @@ function validarUsuario({ nombres, apellidos, email, password, rol } = {}, { esN
 }
 
 function validarResidente(datos, hoy = new Date()) {
-  if (!datos || typeof datos !== 'object' || Array.isArray(datos)) return ['Envíe los datos del residente.'];
+  if (!datos || typeof datos !== 'object' || Array.isArray(datos)) return ['Envíe los datos del interno.'];
   const errores = [];
   for (const [campo, max] of Object.entries(LIMITES)) {
     const v = datos[campo];
@@ -95,7 +95,7 @@ function validarResidente(datos, hoy = new Date()) {
   if (vacio(fechaNac)) errores.push('La fecha de nacimiento es obligatoria.');
   else if (!esTexto(fechaNac) || !esFechaValida(fechaNac)) errores.push('La fecha de nacimiento no es válida (use AAAA-MM-DD).');
   else if (new Date(`${fechaNac}T00:00:00`) > hoy) errores.push('La fecha de nacimiento no puede ser futura.');
-  else if (calcularEdad(fechaNac, hoy) < 60) errores.push('El residente debe tener 60 años o más.');
+  else if (calcularEdad(fechaNac, hoy) < 60) errores.push('El interno debe tener 60 años o más.');
   else if (calcularEdad(fechaNac, hoy) > 120) errores.push('La fecha de nacimiento no es realista.');
 
   if (!['M', 'F'].includes(sexo)) errores.push('El sexo debe ser M o F.');

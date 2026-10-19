@@ -1,5 +1,7 @@
 'use client';
+import { useState } from 'react';
 import { api } from '@/lib/api';
+import Confirmar from '@/components/Confirmar';
 import { useDatos, useEnvio } from '@/lib/useDatos';
 import { fechaHora } from '@/lib/formato';
 import Aviso from '@/components/Aviso';
@@ -7,10 +9,10 @@ import Aviso from '@/components/Aviso';
 export default function Enfermeria() {
   const { datos: lista, error, recargar } = useDatos('/enfermeria/medicamentos');
   const { enviando, aviso, setAviso, enviar } = useEnvio();
+  const [actual, setActual] = useState(null);
 
-  async function aplicar(m) {
-    const observaciones = window.prompt(`Aplicación de ${m.medicamento} a ${m.residente}.\nObservaciones (opcional):`, '');
-    if (observaciones === null) return;
+  async function aplicar(m, observaciones) {
+    setActual(null);
     if (await enviar(() => api(`/enfermeria/medicamentos/${m.id}/aplicar`, { metodo: 'POST', datos: { observaciones } }),
       'Aplicación registrada.')) recargar();
   }
@@ -30,13 +32,17 @@ export default function Enfermeria() {
                   <td>{m.residente}</td><td>{m.habitacion || '—'}</td><td>{m.medicamento}</td>
                   <td className="ajustar">{m.dosis}, {m.frecuencia}, durante {m.tiempo_aplicacion}{m.indicaciones ? `. ${m.indicaciones}` : ''}</td>
                   <td>{m.aplicaciones}</td><td>{fechaHora(m.ultima_aplicacion)}</td>
-                  <td><button className="boton chico" disabled={enviando} onClick={() => aplicar(m)}>Registrar aplicación</button></td>
+                  <td><button className="boton chico" disabled={enviando} onClick={() => setActual(m)}>Registrar aplicación</button></td>
                 </tr>
               ))}</tbody>
             </table>
           )}
         </div>
       )}
+      <Confirmar abierto={!!actual} titulo="Registrar aplicación"
+        mensaje={actual ? `${actual.medicamento} a ${actual.residente}: ${actual.dosis}, ${actual.frecuencia}.` : ''}
+        textoConfirmar="Registrar" estiloConfirmar="" pedirMotivo motivoObligatorio={false} etiquetaMotivo="Observaciones (opcional)"
+        onConfirmar={(obs) => aplicar(actual, obs)} onCancelar={() => setActual(null)} />
     </>
   );
 }

@@ -36,7 +36,7 @@ describe('Validación de residentes', () => {
 
   test('rechaza menores de 60 años', () => {
     const errores = v.validarResidente({ ...residenteValido, fecha_nacimiento: '1980-01-01' }, HOY);
-    expect(errores).toContain('El residente debe tener 60 años o más.');
+    expect(errores).toContain('El interno debe tener 60 años o más.');
   });
 
   test('rechaza fecha de ingreso futura', () => {

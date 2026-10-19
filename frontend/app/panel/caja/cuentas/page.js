@@ -39,7 +39,7 @@ export default function Cuentas() {
   const { datos: residentes } = useDatos('/residentes?estado=');
   const [residenteId, setResidenteId] = useState('');
   const { datos: cuenta, recargar: recargarCuenta } = useDatos(residenteId ? `/caja/estado-cuenta/${residenteId}` : null);
-  const { datos: cargos, recargar: recargarCargos } = useDatos(`/caja/cargos${residenteId ? `?residente_id=${residenteId}` : '?estado=Pendiente'}`);
+  const { datos: cargos, recargar: recargarCargos } = useDatos(`/caja/cargos${residenteId ? `?residente_id=${residenteId}` : '?estado=ConSaldo'}`);
   const [pagando, setPagando] = useState(null);
   const [cargo, setCargo] = useState({ concepto: '', monto_base: '', descuento_pct: '0', fecha_vencimiento: '' });
   const [cuota, setCuota] = useState({ monto_mensual: '', vigente_desde: hoyISO() });
@@ -70,7 +70,7 @@ export default function Cuentas() {
       <Aviso aviso={aviso} onCerrar={() => setAviso(null)} />
       <div className="filtros">
         <select value={residenteId} onChange={(e) => { setResidenteId(e.target.value); setPagando(null); }} aria-label="Interno" style={{ maxWidth: 420 }}>
-          <option value="">Todos los cargos pendientes</option>
+          <option value="">Todos los cargos con saldo</option>
           {(residentes || []).map((r) => <option key={r.id} value={r.id}>{r.apellidos}, {r.nombres} ({r.codigo})</option>)}
         </select>
       </div>
@@ -141,7 +141,7 @@ function FilaCargo({ c, conInterno, pagando, onPagar, onListo, onCancelar }) {
   return (
     <>
       <tr>
-        <td>{fecha(c.fecha)}</td>{conInterno && <td>{c.residente}</td>}
+        <td>{fecha(c.fecha)}</td>{conInterno && <td className="ajustar">{c.residente}</td>}
         <td className="ajustar">{c.concepto}{c.familiar ? <div className="texto-suave">Cuenta de {c.familiar}</div> : <div className="texto-suave">Sin familiar responsable</div>}</td>
         <td className="numero">{dinero(c.monto_base)}</td><td className="numero">{Number(c.descuento_pct)} %</td>
         <td className="numero">{dinero(c.monto)}</td><td className="numero total">{dinero(c.saldo)}</td>

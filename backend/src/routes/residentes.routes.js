@@ -66,7 +66,7 @@ router.get('/', permitirRoles(...LECTURA), async (req, res, next) => {
 router.get('/:id', permitirRoles(...LECTURA), async (req, res, next) => {
   try {
     const filas = await consultar(`SELECT ${COLUMNAS} FROM residentes WHERE id = @id`, { id: req.idRegistro });
-    if (!filas.length) return res.status(404).json({ mensaje: 'El residente no existe.' });
+    if (!filas.length) return res.status(404).json({ mensaje: 'El interno no existe.' });
     return res.json(filas[0]);
   } catch (err) {
     return next(err);
@@ -115,7 +115,7 @@ router.put('/:id', permitirRoles(...ESCRITURA), async (req, res, next) => {
        WHERE id=@id`,
       { ...parametros(req.body), id }
     );
-    if (!filas.length) return res.status(404).json({ mensaje: 'El residente no existe.' });
+    if (!filas.length) return res.status(404).json({ mensaje: 'El interno no existe.' });
     await registrarAuditoria({ usuarioId: req.usuario.id, accion: 'EDITAR', tabla: 'residentes', registroId: id, ip: req.ip });
     return res.json({ id });
   } catch (err) {
@@ -139,7 +139,7 @@ router.patch('/:id/estado', permitirRoles(...ESCRITURA), async (req, res, next) 
       'UPDATE residentes SET estado=@estado, actualizado_en=SYSDATETIME() OUTPUT INSERTED.id WHERE id=@id',
       { id, estado }
     );
-    if (!filas.length) return res.status(404).json({ mensaje: 'El residente no existe.' });
+    if (!filas.length) return res.status(404).json({ mensaje: 'El interno no existe.' });
     await registrarAuditoria({ usuarioId: req.usuario.id, accion: 'CAMBIAR_ESTADO', tabla: 'residentes', registroId: id, detalle: `${estado}${motivo ? `: ${motivo}` : ''}`, ip: req.ip });
     return res.json({ id, estado });
   } catch (err) {

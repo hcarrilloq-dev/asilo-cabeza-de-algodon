@@ -17,7 +17,9 @@ Proyecto del curso **Análisis de Sistemas II**. Aplicación web para llevar la 
 ```
 asilo-cabeza-de-algodon/
 ├── database/
-│   └── script.sql        Script de la base de datos (borra y crea, con datos de ejemplo)
+│   ├── script.sql        Script de la base de datos (borra y crea, con datos de ejemplo)
+│   ├── respaldo.sql      Respaldo completo (.bak)
+│   └── restaurar.sql     Restauración desde el respaldo
 ├── backend/              API REST (puerto 4000)
 │   ├── src/              Código fuente (rutas, middleware, validaciones)
 │   ├── scripts/seed.js   Crea los usuarios de prueba
@@ -41,7 +43,8 @@ asilo-cabeza-de-algodon/
 | Caja: cargos con descuento, pagos, cuotas, donaciones, gastos, deuda con la fundación | Implementado |
 | Correo al familiar al crear la solicitud (con reintento si falla) | Implementado |
 | Portal del familiar (estado de cuenta y citas) | Implementado |
-| Reportes y script de respaldo | En desarrollo |
+| Siete reportes del enunciado (con impresión o PDF) | Implementado |
+| Respaldo y restauración de la base de datos | Implementado |
 
 ---
 
@@ -129,6 +132,27 @@ Por seguridad, **las contraseñas no se guardan en este repositorio**. El comand
 
 La contraseña de prueba se entrega al auditor SQA por un canal privado.
 
+## Respaldo y restauración
+
+1. **Respaldar:** abrir `database/respaldo.sql` en SSMS y ejecutarlo (**F5**). Crea `AsiloCabezaAlgodon.bak` en la carpeta de respaldos de SQL Server y muestra la ruta exacta, por ejemplo `C:\Program Files\Microsoft SQL Server\MSSQL16.SQLEXPRESS\MSSQL\Backup\AsiloCabezaAlgodon.bak`.
+2. **Restaurar:** detener el backend, abrir `database/restaurar.sql` y ejecutarlo (**F5**). Reemplaza los datos actuales por los del respaldo. Luego encender el backend otra vez.
+
+Prueba de recuperación: respaldar, borrar o cambiar un dato de prueba, restaurar y comprobar que el dato vuelve.
+
+## Reportes
+
+Menú **Reportes** (Administrador; el Médico general ve los tres reportes médicos). Cada reporte se filtra por rango de fechas y, opcionalmente, por interno, y se puede imprimir o guardar como PDF desde el botón del reporte.
+
+| Reporte | Contenido |
+|---------|-----------|
+| Costos de cada cita por paciente | Consulta, exámenes y medicamentos de cada cita, con estadísticas por paciente y por especialidad |
+| Análisis médicos por paciente | Ficha médica, motivo de cada atención, exámenes, diagnóstico y medicamentos |
+| Cobros por paciente | Cargos (con los gastos médicos como detalle y el descuento de la fundación) y pagos recibidos |
+| Pagos a la fundación | Pagos realizados y deuda pendiente |
+| Entradas | Donaciones (por tipo de donante) y cobros |
+| Exámenes realizados por paciente | Exámenes con resultado y costo |
+| Medicamentos aplicados por paciente | Indicados, entregados y aplicaciones de enfermería |
+
 ## Ejecutar las pruebas automatizadas
 
 Las pruebas simulan la base de datos, por lo que **no necesitan SQL Server**:
@@ -139,7 +163,7 @@ npm install
 npm test
 ```
 
-Resultado esperado: `Tests: 83 passed`.
+Resultado esperado: `Tests: 88 passed`.
 
 ## Permisos por rol
 
@@ -183,6 +207,7 @@ No existe registro público: solo el Administrador crea cuentas. Los permisos se
 | `/api/caja/...` | Cargos, pagos, cuotas, donaciones, gastos, fundación y resumen |
 | `/api/portal` | Portal del familiar |
 | `/api/notificaciones` | Correos a familiares y reenvío |
+| `/api/reportes/...` | Los siete reportes |
 | `/api/catalogos` | Especialidades, médicos, enfermeros, medicamentos y descuentos |
 
 Una petición con datos inválidos, un cuerpo que no es JSON o un identificador no numérico responde **400** con un mensaje, y el servidor sigue activo.

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
 import { leerSesion, puede } from '@/lib/sesion';
+import { fecha } from '@/lib/formato';
 
 function edad(fecha) {
   const n = new Date(`${fecha}T00:00:00`);
@@ -38,15 +39,15 @@ export default function Residentes() {
     <>
       <div className="encabezado">
         <div>
-          <h1>Residentes</h1>
+          <h1>Internos</h1>
           <p>Ficha de cada interno del asilo.</p>
         </div>
-        {puedeRegistrar && <Link className="boton" href="/panel/residentes/nuevo">Registrar residente</Link>}
+        {puedeRegistrar && <Link className="boton" href="/panel/residentes/nuevo">Registrar interno</Link>}
       </div>
 
       <div className="filtros">
         <input type="search" placeholder="Buscar por nombre, código o DPI" value={buscar}
-          onChange={(e) => setBuscar(e.target.value)} aria-label="Buscar residente" />
+          onChange={(e) => setBuscar(e.target.value)} aria-label="Buscar interno" />
         <select value={estado} onChange={(e) => setEstado(e.target.value)} aria-label="Filtrar por estado">
           <option value="Activo">Activos</option>
           <option value="Egresado">Egresados</option>
@@ -56,13 +57,13 @@ export default function Residentes() {
       </div>
 
       {error && <div className="mensaje error" role="alert">{error}</div>}
-      {!lista && !error && <p className="cargando">Cargando residentes…</p>}
+      {!lista && !error && <p className="cargando">Cargando internos…</p>}
 
       {lista && (
         <div className="tabla-envoltura">
           {lista.length === 0 ? (
             <div className="vacio">
-              {buscar ? 'Ningún residente coincide con la búsqueda.' : 'Aún no hay residentes en esta lista.'}
+              {buscar ? 'Ningún interno coincide con la búsqueda.' : 'Aún no hay internos en esta lista.'}
               {puedeRegistrar && !buscar && <p><Link href="/panel/residentes/nuevo">Registrar el primero</Link></p>}
             </div>
           ) : (
@@ -77,7 +78,7 @@ export default function Residentes() {
                     <td>{r.apellidos}, {r.nombres}</td>
                     <td>{edad(r.fecha_nacimiento)} años</td>
                     <td>{r.habitacion || '—'}</td>
-                    <td>{r.fecha_ingreso}</td>
+                    <td>{fecha(r.fecha_ingreso)}</td>
                     <td><span className={`etiqueta ${r.estado}`}>{r.estado}</span></td>
                     <td><Link href={`/panel/residentes/${r.id}`}>Ver expediente</Link></td>
                   </tr>

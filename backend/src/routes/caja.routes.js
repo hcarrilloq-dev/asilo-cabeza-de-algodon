@@ -53,6 +53,7 @@ router.get('/cargos', permitirRoles(...PERMISOS.caja), manejar(async (req, res) 
   await actualizarVencidos();
   const residente = v.id(req.query.residente_id, 'x') ? null : Number(req.query.residente_id);
   const estado = ['Pendiente', 'Parcial', 'Cancelado', 'Vencido'].includes(req.query.estado) ? req.query.estado : null;
+  const conSaldo = req.query.estado === 'ConSaldo';   // Pendiente, Parcial o Vencido
   const filas = await consultar(
     `SELECT TOP 500 c.id, c.tipo, c.concepto, c.monto_base, c.descuento_pct, c.monto, c.estado, c.periodo, c.fecha,
             c.fecha_vencimiento, r.id AS residente_id, r.codigo, r.nombres + N' ' + r.apellidos AS residente,
@@ -60,7 +61,8 @@ router.get('/cargos', permitirRoles(...PERMISOS.caja), manejar(async (req, res) 
             ISNULL((SELECT SUM(p.monto) FROM pagos p WHERE p.cargo_id = c.id), 0) AS pagado
      FROM cargos c JOIN residentes r ON r.id = c.residente_id LEFT JOIN familiares f ON f.id = c.familiar_id
      WHERE (@r IS NULL OR c.residente_id = @r) AND (@estado IS NULL OR c.estado = @estado)
-     ORDER BY c.fecha DESC, c.id DESC`, { r: residente, estado }
+       AND (@conSaldo = 0 OR c.estado IN ('Pendiente','Parcial','Vencido'))
+     ORDER BY c.fecha DESC, c.id DESC`, { r: residente, estado, conSaldo: conSaldo ? 1 : 0 }
   );
   res.json(filas.map((f) => ({ ...f, saldo: Number((f.monto - f.pagado).toFixed(2)) })));
 }));

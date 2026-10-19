@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { leerSesion, puede } from '@/lib/sesion';
 import FormResidente from '@/components/FormResidente';
 import Confirmar from '@/components/Confirmar';
+import { fecha } from '@/lib/formato';
 import SeccionFamiliares from '@/components/SeccionFamiliares';
 import SeccionHistorial from '@/components/SeccionHistorial';
 
@@ -16,7 +17,7 @@ export default function ExpedienteResidente() {
   const params = useSearchParams();
   const [r, setR] = useState(null);
   const [error, setError] = useState('');
-  const [aviso, setAviso] = useState(params.get('nuevo') ? 'Residente registrado correctamente.' : '');
+  const [aviso, setAviso] = useState(params.get('nuevo') ? 'Interno registrado correctamente.' : '');
   const [editando, setEditando] = useState(false);
   const [puedeEditar, setPuedeEditar] = useState(false);
   const [cambio, setCambio] = useState(null); // estado al que se quiere cambiar
@@ -68,7 +69,7 @@ export default function ExpedienteResidente() {
     <>
       <div className="encabezado">
         <div>
-          <p><Link href="/panel/residentes">Residentes</Link></p>
+          <p><Link href="/panel/residentes">Internos</Link></p>
           <h1>{r.nombres} {r.apellidos}</h1>
           <p>{r.codigo} <span className={`etiqueta ${r.estado}`}>{r.estado}</span></p>
         </div>
@@ -91,9 +92,9 @@ export default function ExpedienteResidente() {
       <section className="caja">
         <dl className="detalle">
           <div><dt>DPI</dt><dd>{v(r.dpi)}</dd></div>
-          <div><dt>Fecha de nacimiento</dt><dd>{r.fecha_nacimiento}</dd></div>
+          <div><dt>Fecha de nacimiento</dt><dd>{fecha(r.fecha_nacimiento)}</dd></div>
           <div><dt>Sexo</dt><dd>{SEXO[r.sexo]}</dd></div>
-          <div><dt>Fecha de ingreso</dt><dd>{r.fecha_ingreso}</dd></div>
+          <div><dt>Fecha de ingreso</dt><dd>{fecha(r.fecha_ingreso)}</dd></div>
           <div><dt>Habitación</dt><dd>{v(r.habitacion)}</dd></div>
           <div><dt>Tipo de sangre</dt><dd>{v(r.tipo_sangre)}</dd></div>
           <div className="ancho sensible"><dt>Psicopatologías</dt><dd>{v(r.psicopatologias)}</dd></div>

@@ -8,8 +8,8 @@ import Estado from '@/components/Estado';
 
 // Qué hace cada rol en el sistema y a dónde ir (flujo del enunciado)
 const ACCESOS = {
-  Administrador: [['/panel/residentes', 'Internos'], ['/panel/familiares', 'Familiares'], ['/panel/caja', 'Caja'], ['/panel/usuarios', 'Usuarios']],
-  MedicoGeneral: [['/panel/solicitudes/nueva', 'Referir a especialista'], ['/panel/residentes', 'Fichas de internos'], ['/panel/solicitudes', 'Solicitudes']],
+  Administrador: [['/panel/residentes', 'Internos'], ['/panel/familiares', 'Familiares'], ['/panel/caja', 'Caja'], ['/panel/reportes', 'Reportes'], ['/panel/usuarios', 'Usuarios']],
+  MedicoGeneral: [['/panel/solicitudes/nueva', 'Referir a especialista'], ['/panel/residentes', 'Fichas de internos'], ['/panel/solicitudes', 'Solicitudes'], ['/panel/reportes', 'Reportes']],
   MedicoEspecialista: [['/panel/citas', 'Mis citas']],
   Enfermeria: [['/panel/citas', 'Citas que acompaño'], ['/panel/enfermeria', 'Medicamentos a aplicar']],
   Fundacion: [['/panel/solicitudes', 'Solicitudes por asignar'], ['/panel/caja/fundacion', 'Cuenta del asilo']],

@@ -194,6 +194,26 @@ tbody tr:hover { background: #f8fafb; }
 .numero { text-align: right; font-variant-numeric: tabular-nums; }
 .total { font-weight: 700; }
 .texto-suave { color: var(--tinta-suave); }
-td.ajustar, .ajustar { white-space: normal; min-width: 14rem; }
+td.ajustar, .ajustar { white-space: normal; min-width: 11rem; }
 .pestana-enlace { padding: .45rem .9rem; border-radius: 999px; border: 1px solid var(--borde); background: var(--superficie); color: var(--tinta); text-decoration: none; }
 .pestana-enlace.activa { background: var(--primario); border-color: var(--primario); color: #fff; font-weight: 700; }
+
+/* ---------- Reportes ---------- */
+.tarjeta-boton { text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.tarjeta-boton:hover { border-color: var(--primario); background: #fbfdfd; }
+.tarjetas:has(.tarjeta-boton) { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.reporte h3 { margin: 1.25rem 0 .75rem; }
+.barras { display: grid; gap: .5rem; }
+.barra { display: grid; grid-template-columns: minmax(8rem, 14rem) 1fr auto; gap: .75rem; align-items: center; }
+.barra-pista { background: var(--fondo); border-radius: 999px; height: .8rem; overflow: hidden; }
+.barra-relleno { background: var(--primario); height: 100%; border-radius: 999px; }
+
+@media print {
+  .lateral, .no-imprimir, .cerrar-aviso { display: none !important; }
+  .panel { display: block; }
+  .contenido { padding: 0; max-width: none; }
+  body { background: #fff; }
+  .caja, .tabla-envoltura, .dato { border-color: #bbb; }
+  th, td { white-space: normal; }
+  .barra-relleno { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
