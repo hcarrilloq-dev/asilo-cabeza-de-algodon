@@ -1,0 +1,30 @@
+@startuml estados
+title SIGEVAN – Estados de la solicitud, la visita y el cargo
+skinparam shadowing false
+state "Solicitud médica" as S {
+  [*] --> Pendiente : médico general crea
+  Pendiente --> Asignada : fundación asigna cita
+  Pendiente --> Cancelada : médico general o administrador
+  Asignada --> Atendida : especialista cierra la visita
+  Atendida --> [*]
+  Cancelada --> [*]
+}
+state "Visita médica" as V {
+  [*] --> Abierta : especialista atiende la cita
+  Abierta --> Abierta : exámenes, medicamentos, avance
+  Abierta --> Cerrada : cerrar con diagnóstico
+  Cerrada --> [*]
+}
+state "Cargo" as C {
+  [*] --> CPendiente : servicio entregado o cuota
+  state "Pendiente" as CPendiente
+  CPendiente --> Parcial : pago menor que el saldo
+  CPendiente --> Cancelado : pago del saldo completo
+  Parcial --> Cancelado : pago del saldo restante
+  CPendiente --> Vencido : pasa la fecha de vencimiento
+  Parcial --> Vencido : pasa la fecha de vencimiento
+  Vencido --> Parcial : pago menor que el saldo
+  Vencido --> Cancelado : pago del saldo completo
+  Cancelado --> [*]
+}
+@enduml

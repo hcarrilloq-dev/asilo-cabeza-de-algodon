@@ -1,0 +1,54 @@
+@startuml casos-de-uso
+title SIGEVAN – Diagrama general de casos de uso
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+actor "Administrador" as ADM
+actor "Médico general" as MG
+actor "Familiar responsable" as FAM
+actor "Enfermero(a)" as ENF
+actor "Fundación" as FUN
+actor "Médico especialista" as ESP
+actor "Laboratorio" as LAB
+actor "Farmacia" as FAR
+
+rectangle "Sistema SIGEVAN" {
+  usecase "CU-00 Gestionar usuarios\ny configuración" as U1
+  usecase "Vincular familiar\nresponsable" as U2
+  usecase "CU-05 Registrar pago" as U3
+  usecase "Gestionar cuotas,\ndonaciones y gastos" as U3b
+  usecase "Registrar ficha\ndel interno" as U4
+  usecase "Generar reportes" as U5
+  usecase "CU-01 Referir a\nespecialista" as U6
+  usecase "CU-02 Avisar al familiar\npor correo" as U7
+  usecase "Consultar cuenta\ny citas" as U8
+  usecase "CU-03 Asignar médico\ny horario" as U9
+  usecase "CU-04 Atender\nvisita médica" as U10
+  usecase "Registrar resultado\nde examen" as U11
+  usecase "Entregar medicamento" as U12
+  usecase "Acompañar y aplicar\nmedicamentos" as U13
+  usecase "Cargar servicio con\ndescuento de la fundación" as U14
+}
+
+ADM --> U1
+ADM --> U2
+ADM --> U3
+ADM --> U3b
+ADM --> U4
+ADM --> U5
+MG --> U4
+MG --> U5
+MG --> U6
+U6 .> U7 : <<include>>
+FAM --> U7
+FAM --> U8
+FUN --> U9
+ESP --> U10
+LAB --> U11
+FAR --> U12
+ENF --> U13
+U10 .> U14 : <<include>>
+U11 .> U14 : <<include>>
+U12 .> U14 : <<include>>
+@enduml

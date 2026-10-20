@@ -1,0 +1,42 @@
+@startuml secuencia-cargo-pago
+title SIGEVAN – Secuencia: cargo con descuento y pago
+skinparam shadowing false
+autonumber
+actor "Administrador" as ADM
+participant "Frontend" as FE
+participant "API REST" as API
+database "SQL Server" as DB
+
+== Cargo con descuento (al entregar un servicio) ==
+API -> DB : buscar familiar responsable del interno
+API -> DB : INSERT cargos (monto_base, descuento_pct)
+note right of DB
+  monto = ROUND(monto_base × (100 − descuento) / 100, 2)
+  columna calculada; estado Pendiente; vence en 30 días
+end note
+
+== Pago del familiar ==
+ADM -> FE : Pagar cargo (monto, método)
+FE -> FE : generar clave_operacion única del formulario
+FE -> API : POST /api/caja/pagos {cargo_id, monto, metodo, clave_operacion}
+API -> API : validar monto > 0, máximo 2 decimales
+alt monto inválido
+  API --> FE : 400 con mensaje
+else monto válido
+  group transacción
+    API -> DB : ¿existe la clave_operacion?
+    alt ya existe (doble clic)
+      API --> FE : 200 {recibo existente, repetido}
+    else nueva
+      API -> DB : leer cargo con bloqueo y calcular saldo
+      alt monto > saldo
+        API --> FE : 400 "El pago es mayor que el saldo"
+      else monto <= saldo
+        API -> DB : INSERT pagos (REC-000001)
+        API -> DB : cargo → Parcial o Cancelado
+        API --> FE : 201 {numero_recibo, estado_cargo}
+      end
+    end
+  end
+end
+@enduml

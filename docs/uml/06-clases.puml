@@ -1,0 +1,113 @@
+@startuml clases
+title SIGEVAN – Diagrama de clases del dominio
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide circle
+
+class Usuario {
+  - email: texto
+  - rol: Rol
+  - activo: booleano
+  + iniciarSesion()
+  + puede(permiso)
+}
+class Residente {
+  - codigo: texto
+  - nombres: texto
+  - fechaNacimiento: fecha
+  - psicopatologias: texto
+  - medicamentosCajon: texto
+  - estado: Activo | Egresado | Fallecido
+  + registrar()
+  + editar()
+  + registrarEgreso(motivo)
+}
+class Familiar {
+  - nombres: texto
+  - telefono: texto
+  - email: texto
+  + vincular(interno, parentesco, responsable)
+}
+class SolicitudMedica {
+  - motivo: texto
+  - prioridad: Normal | Urgente
+  - estado: Pendiente | Asignada | Atendida | Cancelada
+  + crear()
+  + asignarCita(medico, fechaHora)
+  + cancelar()
+}
+class CitaMedica {
+  - fechaHora: fecha y hora
+  - lugar: texto
+  - precio: decimal
+  - descuentoPct: decimal
+  - monto: decimal
+  + abrirVisita()
+}
+class VisitaMedica {
+  - motivo: texto
+  - diagnostico: texto
+  - observaciones: texto
+  - estado: Abierta | Cerrada
+  + asignarExamen(tipo)
+  + indicarMedicamento(...)
+  + cerrar(diagnostico)
+}
+class ExamenLaboratorio {
+  - tipoExamen: texto
+  - resultado: texto
+  - precio: decimal
+  - monto: decimal
+  + registrarResultado(resultado, precio)
+}
+class VisitaMedicamento {
+  - cantidad: entero
+  - dosis: texto
+  - frecuencia: texto
+  - tiempoAplicacion: texto
+  - estado: Indicado | Entregado
+  + entregar()
+  + aplicar(enfermero)
+}
+class Medico {
+  - tipo: General | Especialista
+}
+class Especialidad
+class Enfermero {
+  - turno: texto
+}
+class Medicamento {
+  - precioUnitario: decimal
+}
+class Cargo {
+  - tipo: Cuota | Consulta | Examen | Medicamento | Otro
+  - montoBase: decimal
+  - descuentoPct: decimal
+  - monto: decimal
+  - estado: Pendiente | Parcial | Cancelado | Vencido
+  + saldo(): decimal
+}
+class Pago {
+  - monto: decimal
+  - metodo: texto
+  - numeroRecibo: texto
+  - claveOperacion: texto
+}
+
+Usuario "1" -- "*" Residente : registra
+Residente "*" -- "*" Familiar : residente_familiar
+Residente "1" -- "*" SolicitudMedica
+SolicitudMedica "*" --> "1" Especialidad
+SolicitudMedica "*" --> "1" Enfermero : acompaña
+SolicitudMedica "*" --> "1" Medico : médico general
+SolicitudMedica "1" -- "0..1" CitaMedica
+CitaMedica "*" --> "1" Medico : especialista
+Medico "*" --> "1" Especialidad
+CitaMedica "1" -- "0..1" VisitaMedica
+VisitaMedica *-- "*" ExamenLaboratorio
+VisitaMedica *-- "*" VisitaMedicamento
+VisitaMedicamento "*" --> "1" Medicamento
+Residente "1" -- "*" Cargo
+Familiar "1" -- "*" Cargo : cuenta
+Cargo "1" -- "*" Pago
+@enduml

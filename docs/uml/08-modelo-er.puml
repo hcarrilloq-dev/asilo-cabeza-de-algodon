@@ -1,0 +1,328 @@
+@startuml modelo-er
+title SIGEVAN – Modelo entidad-relación (24 tablas, generado desde database/script.sql)
+skinparam shadowing false
+skinparam linetype ortho
+hide circle
+left to right direction
+entity "roles" as roles {
+  * id : INT <<PK>>
+  --
+  * nombre : NVARCHAR(40)
+  descripcion : NVARCHAR(200)
+}
+entity "usuarios" as usuarios {
+  * id : INT <<PK>>
+  --
+  * nombres : NVARCHAR(80)
+  * apellidos : NVARCHAR(80)
+  * email : NVARCHAR(120)
+  * password_hash : NVARCHAR(200)
+  * rol_id : INT <<FK roles>>
+  * activo : BIT
+  ultimo_acceso : DATETIME2
+  * creado_en : DATETIME2
+}
+entity "auditoria" as auditoria {
+  * id : BIGINT <<PK>>
+  --
+  usuario_id : INT <<FK usuarios>>
+  * accion : NVARCHAR(30)
+  tabla : NVARCHAR(60)
+  registro_id : INT
+  detalle : NVARCHAR(500)
+  ip : NVARCHAR(45)
+  * fecha : DATETIME2
+}
+entity "configuracion" as configuracion {
+  * clave : NVARCHAR(50) <<PK>>
+  --
+  * valor : NVARCHAR(200)
+  descripcion : NVARCHAR(200)
+}
+entity "residentes" as residentes {
+  * id : INT <<PK>>
+  --
+  * codigo : NVARCHAR(20)
+  * nombres : NVARCHAR(80)
+  * apellidos : NVARCHAR(80)
+  dpi : NVARCHAR(13)
+  * fecha_nacimiento : DATE
+  * sexo : CHAR(1)
+  * fecha_ingreso : DATE
+  * estado : NVARCHAR(20)
+  tipo_sangre : NVARCHAR(3)
+  psicopatologias : NVARCHAR(500)
+  medicamentos_cajon : NVARCHAR(500)
+  alergias : NVARCHAR(300)
+  condiciones_medicas : NVARCHAR(500)
+  habitacion : NVARCHAR(10)
+  observaciones : NVARCHAR(500)
+  creado_por : INT <<FK usuarios>>
+  * creado_en : DATETIME2
+  actualizado_en : DATETIME2
+}
+entity "familiares" as familiares {
+  * id : INT <<PK>>
+  --
+  * nombres : NVARCHAR(80)
+  * apellidos : NVARCHAR(80)
+  dpi : NVARCHAR(13)
+  * telefono : NVARCHAR(15)
+  email : NVARCHAR(120)
+  direccion : NVARCHAR(200)
+  usuario_id : INT <<FK usuarios>>
+}
+entity "residente_familiar" as residente_familiar {
+  * residente_id : INT <<PK>> <<FK residentes>>
+  * familiar_id : INT <<PK>> <<FK familiares>>
+  --
+  * parentesco : NVARCHAR(30)
+  * es_responsable : BIT
+}
+entity "especialidades" as especialidades {
+  * id : INT <<PK>>
+  --
+  * nombre : NVARCHAR(60)
+}
+entity "medicos" as medicos {
+  * id : INT <<PK>>
+  --
+  * nombres : NVARCHAR(80)
+  * apellidos : NVARCHAR(80)
+  colegiado : NVARCHAR(20)
+  * especialidad_id : INT <<FK especialidades>>
+  * tipo : NVARCHAR(12)
+  telefono : NVARCHAR(15)
+  * activo : BIT
+  usuario_id : INT <<FK usuarios>>
+}
+entity "enfermeros" as enfermeros {
+  * id : INT <<PK>>
+  --
+  * nombres : NVARCHAR(80)
+  * apellidos : NVARCHAR(80)
+  telefono : NVARCHAR(15)
+  * turno : NVARCHAR(10)
+  * activo : BIT
+  usuario_id : INT <<FK usuarios>>
+}
+entity "solicitudes_medicas" as solicitudes_medicas {
+  * id : INT <<PK>>
+  --
+  * residente_id : INT <<FK residentes>>
+  * medico_general_id : INT <<FK medicos>>
+  * especialidad_id : INT <<FK especialidades>>
+  * enfermero_id : INT <<FK enfermeros>>
+  * motivo : NVARCHAR(500)
+  * prioridad : NVARCHAR(10)
+  * estado : NVARCHAR(12)
+  * fecha_solicitud : DATETIME2
+  * creado_por : INT <<FK usuarios>>
+}
+entity "citas_medicas" as citas_medicas {
+  * id : INT <<PK>>
+  --
+  * solicitud_id : INT <<FK solicitudes_medicas>>
+  * medico_id : INT <<FK medicos>>
+  * fecha_hora : DATETIME2
+  lugar : NVARCHAR(150)
+  * estado : NVARCHAR(12)
+  * precio : DECIMAL(10,2)
+  * descuento_pct : DECIMAL(5,2)
+  monto : calculada
+  * asignado_por : INT <<FK usuarios>>
+  * asignado_en : DATETIME2
+}
+entity "visitas_medicas" as visitas_medicas {
+  * id : INT <<PK>>
+  --
+  * cita_id : INT <<FK citas_medicas>>
+  * fecha_visita : DATETIME2
+  * motivo : NVARCHAR(500)
+  diagnostico : NVARCHAR(1000)
+  observaciones : NVARCHAR(1000)
+  * estado : NVARCHAR(10)
+  cerrada_en : DATETIME2
+}
+entity "examenes_laboratorio" as examenes_laboratorio {
+  * id : INT <<PK>>
+  --
+  * visita_id : INT <<FK visitas_medicas>>
+  * tipo_examen : NVARCHAR(100)
+  indicaciones : NVARCHAR(300)
+  * estado : NVARCHAR(12)
+  resultado : NVARCHAR(2000)
+  fecha_resultado : DATETIME2
+  * precio : DECIMAL(10,2)
+  * descuento_pct : DECIMAL(5,2)
+  monto : calculada
+  registrado_por : INT <<FK usuarios>>
+}
+entity "medicamentos" as medicamentos {
+  * id : INT <<PK>>
+  --
+  * nombre : NVARCHAR(100)
+  * presentacion : NVARCHAR(50)
+  * concentracion : NVARCHAR(30)
+  * precio_unitario : DECIMAL(10,2)
+  * activo : BIT
+}
+entity "visita_medicamentos" as visita_medicamentos {
+  * id : INT <<PK>>
+  --
+  * visita_id : INT <<FK visitas_medicas>>
+  * medicamento_id : INT <<FK medicamentos>>
+  * cantidad : INT
+  * dosis : NVARCHAR(60)
+  * frecuencia : NVARCHAR(60)
+  * tiempo_aplicacion : NVARCHAR(60)
+  indicaciones : NVARCHAR(300)
+  * estado : NVARCHAR(10)
+  * precio_unitario : DECIMAL(10,2)
+  * descuento_pct : DECIMAL(5,2)
+  monto : calculada
+  entregado_en : DATETIME2
+  entregado_por : INT <<FK usuarios>>
+}
+entity "administracion_medicamentos" as administracion_medicamentos {
+  * id : INT <<PK>>
+  --
+  * visita_medicamento_id : INT <<FK visita_medicamentos>>
+  * enfermero_id : INT <<FK enfermeros>>
+  * fecha_hora : DATETIME2
+  observaciones : NVARCHAR(300)
+}
+entity "cuotas" as cuotas {
+  * id : INT <<PK>>
+  --
+  * residente_id : INT <<FK residentes>>
+  * monto_mensual : DECIMAL(10,2)
+  * vigente_desde : DATE
+  * activa : BIT
+}
+entity "cargos" as cargos {
+  * id : INT <<PK>>
+  --
+  * residente_id : INT <<FK residentes>>
+  familiar_id : INT <<FK familiares>>
+  * tipo : NVARCHAR(12)
+  * concepto : NVARCHAR(200)
+  * monto_base : DECIMAL(10,2)
+  * descuento_pct : DECIMAL(5,2)
+  monto : calculada
+  periodo : CHAR(7)
+  cita_id : INT <<FK citas_medicas>>
+  examen_id : INT <<FK examenes_laboratorio>>
+  visita_medicamento_id : INT <<FK visita_medicamentos>>
+  * estado : NVARCHAR(10)
+  * fecha : DATE
+  fecha_vencimiento : DATE
+  creado_por : INT <<FK usuarios>>
+}
+entity "pagos" as pagos {
+  * id : INT <<PK>>
+  --
+  * cargo_id : INT <<FK cargos>>
+  * residente_id : INT <<FK residentes>>
+  familiar_id : INT <<FK familiares>>
+  * monto : DECIMAL(10,2)
+  * metodo : NVARCHAR(15)
+  * numero_recibo : NVARCHAR(20)
+  * clave_operacion : NVARCHAR(64)
+  * fecha : DATE
+  observaciones : NVARCHAR(300)
+  * registrado_por : INT <<FK usuarios>>
+  * registrado_en : DATETIME2
+}
+entity "pagos_fundacion" as pagos_fundacion {
+  * id : INT <<PK>>
+  --
+  * cita_id : INT <<FK citas_medicas>>
+  * monto : DECIMAL(10,2)
+  * fecha : DATE
+  comprobante : NVARCHAR(30)
+  * clave_operacion : NVARCHAR(64)
+  * registrado_por : INT <<FK usuarios>>
+}
+entity "donaciones" as donaciones {
+  * id : INT <<PK>>
+  --
+  * tipo_donante : NVARCHAR(25)
+  * donante : NVARCHAR(150)
+  * monto : DECIMAL(12,2)
+  * fecha : DATE
+  descripcion : NVARCHAR(300)
+  * numero_recibo : NVARCHAR(20)
+  * clave_operacion : NVARCHAR(64)
+  * registrado_por : INT <<FK usuarios>>
+}
+entity "gastos" as gastos {
+  * id : INT <<PK>>
+  --
+  * categoria : NVARCHAR(20)
+  * descripcion : NVARCHAR(300)
+  * monto : DECIMAL(12,2)
+  * fecha : DATE
+  comprobante : NVARCHAR(30)
+  * clave_operacion : NVARCHAR(64)
+  * registrado_por : INT <<FK usuarios>>
+}
+entity "notificaciones" as notificaciones {
+  * id : INT <<PK>>
+  --
+  * familiar_id : INT <<FK familiares>>
+  * residente_id : INT <<FK residentes>>
+  solicitud_id : INT <<FK solicitudes_medicas>>
+  * email : NVARCHAR(120)
+  * asunto : NVARCHAR(150)
+  * mensaje : NVARCHAR(2000)
+  * estado : NVARCHAR(10)
+  * intentos : INT
+  ultimo_error : NVARCHAR(300)
+  * creada_en : DATETIME2
+  enviada_en : DATETIME2
+}
+usuarios }o--|| roles
+auditoria }o--o| usuarios
+residentes }o--o| usuarios
+familiares }o--o| usuarios
+residente_familiar }o--|| residentes
+residente_familiar }o--|| familiares
+medicos }o--|| especialidades
+medicos }o--o| usuarios
+enfermeros }o--o| usuarios
+solicitudes_medicas }o--|| residentes
+solicitudes_medicas }o--|| medicos
+solicitudes_medicas }o--|| especialidades
+solicitudes_medicas }o--|| enfermeros
+solicitudes_medicas }o--|| usuarios
+citas_medicas |o--|| solicitudes_medicas
+citas_medicas }o--|| medicos
+citas_medicas }o--|| usuarios
+visitas_medicas |o--|| citas_medicas
+examenes_laboratorio }o--|| visitas_medicas
+examenes_laboratorio }o--o| usuarios
+visita_medicamentos }o--|| visitas_medicas
+visita_medicamentos }o--|| medicamentos
+visita_medicamentos }o--o| usuarios
+administracion_medicamentos }o--|| visita_medicamentos
+administracion_medicamentos }o--|| enfermeros
+cuotas }o--|| residentes
+cargos }o--|| residentes
+cargos }o--o| familiares
+cargos }o--o| citas_medicas
+cargos }o--o| examenes_laboratorio
+cargos }o--o| visita_medicamentos
+cargos }o--o| usuarios
+pagos }o--|| cargos
+pagos }o--|| residentes
+pagos }o--o| familiares
+pagos }o--|| usuarios
+pagos_fundacion }o--|| citas_medicas
+pagos_fundacion }o--|| usuarios
+donaciones }o--|| usuarios
+gastos }o--|| usuarios
+notificaciones }o--|| familiares
+notificaciones }o--|| residentes
+notificaciones }o--o| solicitudes_medicas
+@enduml

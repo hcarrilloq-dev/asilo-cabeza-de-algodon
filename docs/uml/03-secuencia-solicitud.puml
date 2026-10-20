@@ -1,0 +1,35 @@
+@startuml secuencia-solicitud
+title SIGEVAN – Secuencia: crear solicitud y avisar al familiar
+skinparam shadowing false
+autonumber
+actor "Médico general" as MG
+participant "Frontend\n(Next.js)" as FE
+participant "API REST\n(Express)" as API
+database "SQL Server" as DB
+participant "Servidor SMTP" as SMTP
+
+MG -> FE : Referir a especialista
+FE -> API : POST /api/solicitudes (token)
+API -> API : verificar token y rol MedicoGeneral
+API -> API : validar especialidad, enfermero(a), motivo
+alt datos inválidos
+  API --> FE : 400 con mensaje
+else datos válidos
+  group transacción
+    API -> DB : verificar interno Activo y enfermero activo
+    API -> DB : INSERT solicitudes_medicas (Pendiente)
+    API -> DB : INSERT notificaciones (Pendiente)
+  end
+  API -> SMTP : enviar correo al familiar responsable
+  alt envío correcto
+    SMTP --> API : enviado
+    API -> DB : notificación → Enviada
+  else sin internet o SMTP mal configurado
+    SMTP --> API : error
+    API -> DB : notificación sigue Pendiente (intentos + 1)
+  end
+  API -> DB : INSERT auditoria
+  API --> FE : 201 {id, correo}
+  FE --> MG : "Solicitud creada" y estado del correo
+end
+@enduml

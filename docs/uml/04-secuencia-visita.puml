@@ -1,0 +1,41 @@
+@startuml secuencia-visita
+title SIGEVAN – Secuencia: visita médica con examen y medicamento
+skinparam shadowing false
+autonumber
+actor "Médico especialista" as ESP
+actor "Laboratorio" as LAB
+actor "Farmacia" as FAR
+participant "API REST" as API
+database "SQL Server" as DB
+
+ESP -> API : POST /api/citas/{id}/visita
+group transacción
+  API -> DB : leer cita (bloqueo) y verificar médico asignado
+  API -> DB : INSERT visitas_medicas (Abierta)
+  API -> DB : cita → Realizada
+  API -> DB : INSERT cargos (Consulta, precio, descuento)
+end
+API --> ESP : 201 {id visita}
+ESP -> API : POST /api/visitas/{id}/examenes
+API -> DB : INSERT examenes_laboratorio (Solicitado)
+ESP -> API : POST /api/visitas/{id}/medicamentos
+API -> API : validar cantidad > 0, dosis, frecuencia, tiempo
+API -> DB : INSERT visita_medicamentos (Indicado, descuento farmacia)
+LAB -> API : POST /api/laboratorio/examenes/{id}/resultado
+group transacción
+  API -> DB : examen → Completado con resultado y precio
+  API -> DB : INSERT cargos (Examen, descuento laboratorio)
+end
+FAR -> API : POST /api/farmacia/medicamentos/{id}/entregar
+group transacción
+  API -> DB : medicamento → Entregado
+  API -> DB : INSERT cargos (Medicamento, descuento farmacia)
+end
+ESP -> API : POST /api/visitas/{id}/cerrar {diagnostico}
+alt sin diagnóstico
+  API --> ESP : 400 "No se puede cerrar la visita sin diagnóstico"
+else con diagnóstico
+  API -> DB : visita → Cerrada, solicitud → Atendida
+  API --> ESP : 200
+end
+@enduml

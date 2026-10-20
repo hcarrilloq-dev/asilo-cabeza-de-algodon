@@ -1,0 +1,49 @@
+@startuml actividad-flujo-medico
+title SIGEVAN – Actividad: de la solicitud a la visita médica
+skinparam shadowing false
+|Médico general|
+start
+:Evaluar al interno;
+:Crear solicitud con especialidad,\nenfermero(a) acompañante y motivo;
+|Sistema|
+:Guardar solicitud (Pendiente);
+:Guardar correo al familiar e intentar enviarlo;
+if (¿Se envió?) then (sí)
+  :Correo Enviada;
+else (no)
+  :Correo Pendiente\n(reintento cada 5 minutos);
+endif
+|Fundación|
+:Ver solicitud sin ficha clínica;
+:Asignar médico de la especialidad,\nfecha futura, lugar y precio;
+|Sistema|
+:Crear cita con descuento de la fundación;
+:Solicitud → Asignada y avisar al familiar;
+|Médico especialista|
+:Atender: abrir la visita desde la cita;
+|Sistema|
+:Cita → Realizada;
+:Cargar consulta con descuento\na la cuenta del familiar;
+|Médico especialista|
+:Revisar ficha e historial del interno;
+:Asignar exámenes e indicar medicamentos\n(cantidad, dosis, frecuencia, tiempo);
+fork
+  |Laboratorio|
+  :Registrar resultado y precio;
+  |Sistema|
+  :Cargar examen con descuento;
+fork again
+  |Farmacia|
+  :Entregar medicamento;
+  |Sistema|
+  :Cargar medicamento con descuento;
+end fork
+|Médico especialista|
+repeat
+  :Escribir diagnóstico y observaciones;
+repeat while (¿Hay diagnóstico?) is (no) not (sí)
+:Cerrar visita;
+|Sistema|
+:Solicitud → Atendida;
+stop
+@enduml
