@@ -9,13 +9,15 @@ const { registrarAuditoria } = require('../utils/auditoria');
 
 const router = express.Router();
 
-// Máximo 10 intentos de inicio de sesión cada 15 minutos por IP
+// Máximo 10 intentos FALLIDOS de inicio de sesión cada 15 minutos por IP (hallazgo H-19):
+// los ingresos correctos no cuentan, para no bloquear al personal que comparte la conexión del asilo.
 const limiteLogin = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: Number(process.env.LOGIN_MAX_FALLIDOS) || 10,
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { mensaje: 'Demasiados intentos. Espere 15 minutos e intente de nuevo.' },
+  message: { mensaje: 'Demasiados intentos fallidos desde esta conexión. Espere 15 minutos e intente de nuevo.' },
 });
 
 // POST /api/auth/login

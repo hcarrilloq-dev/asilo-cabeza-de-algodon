@@ -9,7 +9,23 @@
    BORRA y la crea de nuevo (todos los datos se pierden). Útil para
    instalar desde cero o reiniciar el ambiente de pruebas.
    Después de ejecutarlo, correr "npm run seed" en el backend.
+
+   Desde la línea de comandos (hallazgo H-16), con autenticación de Windows:
+     sqlcmd -S localhost\SQLEXPRESS -E -I -f 65001 -i database\script.sql
+   -I activa QUOTED_IDENTIFIER (lo exigen los índices filtrados y las columnas
+   calculadas) y -f 65001 lee el archivo como UTF-8 (tildes y ñ).
    ===================================================================== */
+
+-- Opciones requeridas por los índices filtrados y las columnas calculadas persistidas.
+-- SSMS ya las activa; sqlcmd no, salvo con -I. Se fijan aquí para cualquier herramienta.
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_NULLS ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET NUMERIC_ROUNDABORT OFF;
+GO
 
 USE master;
 GO

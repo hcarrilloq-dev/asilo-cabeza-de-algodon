@@ -79,7 +79,7 @@ El backend se conecta por TCP/IP con un usuario de SQL Server, así que hay que 
 CREATE LOGIN asilo_app WITH PASSWORD = 'Una_Contraseña_Segura_1';
 ```
 
-2. Abrir `database/script.sql` en SSMS y ejecutarlo completo (**F5**). Crea la base `AsiloCabezaAlgodon` con sus tablas, vistas, catálogos y datos de ejemplo, y da permisos al usuario `asilo_app`.
+2. Abrir `database/script.sql` en SSMS y ejecutarlo completo (**F5**). Desde la línea de comandos: `sqlcmd -S localhost\SQLEXPRESS -E -I -f 65001 -i database\script.sql` (`-I` es obligatorio por los índices filtrados; `-f 65001` respeta las tildes). Crea la base `AsiloCabezaAlgodon` con sus tablas, vistas, catálogos y datos de ejemplo, y da permisos al usuario `asilo_app`.
 
 > **Atención:** si la base ya existe, el script la borra y la crea de nuevo. Sirve para instalar desde cero o reiniciar el ambiente de pruebas. Después de ejecutarlo hay que correr `npm run seed` otra vez.
 
@@ -163,7 +163,18 @@ npm install
 npm test
 ```
 
-Resultado esperado: `Tests: 88 passed`.
+Resultado esperado: `Tests: 95 passed`.
+
+### Pruebas de integración contra la base real
+
+Además de las pruebas con la base simulada, hay pruebas que se ejecutan **contra SQL Server** (fechas opcionales vacías y altas simultáneas de internos). Requieren la base creada, `npm run seed` y el `.env` configurado:
+
+```bash
+cd backend
+npm run test:integracion
+```
+
+Crean registros marcados con `PRUEBA-INT` y los borran al terminar.
 
 ## Permisos por rol
 
@@ -180,7 +191,7 @@ Los ocho roles salen del enunciado y del análisis (se agregó Enfermería, que 
 | Farmacia | Medicamentos indicados en las visitas: registra la entrega (sin diagnóstico ni ficha) |
 | Familiar responsable | Estado de cuenta y citas de su familiar |
 
-No existe registro público: solo el Administrador crea cuentas. Los permisos se validan en el backend (`backend/src/config/roles.js`), no solo ocultando botones.
+No existe registro público: solo el Administrador crea cuentas. El inicio de sesión se bloquea 15 minutos después de **10 intentos fallidos** desde una misma conexión; los ingresos correctos no cuentan para ese límite. Los permisos se validan en el backend (`backend/src/config/roles.js`), no solo ocultando botones.
 
 ## Reglas de negocio implementadas
 

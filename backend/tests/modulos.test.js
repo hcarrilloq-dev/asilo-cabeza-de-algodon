@@ -196,6 +196,25 @@ describe('Flujo médico (PT-08)', () => {
   });
 });
 
+describe('Fechas opcionales vacías (H-17)', () => {
+  test.each([
+    ['/api/caja/donaciones', { tipo_donante: 'Gobierno', donante: 'Municipalidad', monto: 500, fecha: '' }, 'TRY_CAST(@fecha AS DATE)'],
+    ['/api/caja/gastos', { categoria: 'Luz', descripcion: 'Factura de octubre', monto: 850, fecha: '' }, 'TRY_CAST(@fecha AS DATE)'],
+    ['/api/caja/cargos', { residente_id: 1, concepto: 'Pañales', monto_base: 100, fecha_vencimiento: '' }, 'TRY_CAST(@venc AS DATE)'],
+  ])('%s sin fecha se registra con la fecha de hoy', async (ruta, datos, esperado) => {
+    consultar.mockImplementation(async (texto) => {
+      if (texto.includes('INSERT INTO')) return [{ id: 1, numero_recibo: 'X-000001', monto: 100 }];
+      if (texto.includes('MAX(id)')) return [{ n: 1 }];
+      return [];
+    });
+    const res = await request(app).post(ruta).set('Authorization', token('Administrador')).send(datos);
+    expect(res.status).toBe(201);
+    const insert = consultar.mock.calls.find(([t]) => t.includes('INSERT INTO'))[0];
+    expect(insert).toContain(esperado);
+    expect(insert).not.toMatch(/ISNULL\(@(fecha|venc)/);
+  });
+});
+
 describe('Familiares', () => {
   test('teléfono con letras es rechazado', async () => {
     const res = await request(app).post('/api/familiares').set('Authorization', token('Administrador'))

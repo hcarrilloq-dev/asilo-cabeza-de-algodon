@@ -4,7 +4,10 @@
  */
 process.env.JWT_SECRET = 'clave_de_pruebas';
 
-jest.mock('../src/config/db', () => ({ consultar: jest.fn(), obtenerPool: jest.fn() }));
+jest.mock('../src/config/db', () => {
+  const consultar = jest.fn();
+  return { consultar, obtenerPool: jest.fn(), transaccion: jest.fn((fn) => fn(consultar)) };
+});
 
 const request = require('supertest');
 const bcrypt = require('bcryptjs');
@@ -68,6 +71,28 @@ describe('Inicio de sesión', () => {
   test('campos vacíos devuelven 400', async () => {
     const res = await request(app).post('/api/auth/login').send({});
     expect(res.status).toBe(400);
+  });
+});
+
+describe('Límite de intentos (H-19)', () => {
+  test('los ingresos correctos no cuentan para el bloqueo', async () => {
+    for (let i = 0; i < 12; i += 1) {
+      consultar.mockResolvedValueOnce([{
+        id: 1, nombres: 'A', apellidos: 'B', email: 'admin@asilo.com', password_hash: hashCorrecto, activo: true, rol: 'Administrador',
+      }]);
+      const res = await request(app).post('/api/auth/login').set('X-Forwarded-For', '10.9.9.9')
+        .send({ email: 'admin@asilo.com', password: 'Asilo2026' });
+      expect(res.status).toBe(200);
+    }
+  });
+
+  test('los intentos fallidos sí se limitan', async () => {
+    let ultimo;
+    for (let i = 0; i < 11; i += 1) {
+      ultimo = await request(app).post('/api/auth/login').set('X-Forwarded-For', '10.8.8.8')
+        .send({ email: 'nadie@asilo.com', password: 'Incorrecta1' });
+    }
+    expect(ultimo.status).toBe(429);
   });
 });
 
@@ -162,7 +187,7 @@ describe('Residentes', () => {
   });
 
   test('registro válido devuelve 201 con código generado', async () => {
-    consultar.mockResolvedValueOnce([{ id: 1, codigo: 'RES-0001' }]);
+    consultar.mockResolvedValueOnce([{ id: 1 }]).mockResolvedValueOnce([{ id: 1, codigo: 'RES-0001' }]);
     const res = await request(app).post('/api/residentes').set('Authorization', `Bearer ${token}`)
       .send({ nombres: 'Juan', apellidos: 'Pérez', fecha_nacimiento: '1948-03-15', sexo: 'M' });
     expect(res.status).toBe(201);
@@ -181,7 +206,7 @@ describe('Residentes', () => {
   });
 
   test('texto con inyección SQL se trata como texto', async () => {
-    consultar.mockResolvedValueOnce([{ id: 2, codigo: 'RES-0002' }]);
+    consultar.mockResolvedValueOnce([{ id: 2 }]).mockResolvedValueOnce([{ id: 2, codigo: 'RES-0002' }]);
     const res = await request(app).post('/api/residentes').set('Authorization', `Bearer ${token}`)
       .send({ nombres: "' OR '1'='1", apellidos: '<script>alert(1)</script>', fecha_nacimiento: '1948-03-15', sexo: 'M' });
     expect(res.status).toBe(201);
@@ -193,6 +218,32 @@ describe('Residentes', () => {
     const res = await request(app).post('/api/residentes').set('Authorization', `Bearer ${token}`)
       .send({ nombres: 'A'.repeat(81), apellidos: 'Pérez', fecha_nacimiento: '1948-03-15', sexo: 'M' });
     expect(res.status).toBe(400);
+  });
+
+  test('dos altas simultáneas obtienen códigos distintos (H-18)', async () => {
+    consultar.mockImplementation(async (texto, params) => {
+      if (texto.includes('INSERT INTO residentes')) return [{ id: params.nombres === 'Ana' ? 7 : 8 }];
+      if (texto.includes('UPDATE residentes')) return [{ id: params.id, codigo: `RES-000${params.id}` }];
+      return [];
+    });
+    const datos = (nombres) => ({ nombres, apellidos: 'Pérez', fecha_nacimiento: '1948-03-15', sexo: 'F' });
+    const [a, b] = await Promise.all([
+      request(app).post('/api/residentes').set('Authorization', `Bearer ${token}`).send(datos('Ana')),
+      request(app).post('/api/residentes').set('Authorization', `Bearer ${token}`).send(datos('Eva')),
+    ]);
+    expect(a.status).toBe(201);
+    expect(b.status).toBe(201);
+    expect(a.body.codigo).not.toBe(b.body.codigo);
+    const insert = consultar.mock.calls.find(([t]) => t.includes('INSERT INTO residentes'))[0];
+    expect(insert).not.toMatch(/MAX\(id\)/);
+  });
+
+  test('fecha de ingreso vacía usa la fecha de hoy sin error (H-17)', async () => {
+    consultar.mockResolvedValueOnce([{ id: 3 }]).mockResolvedValueOnce([{ id: 3, codigo: 'RES-0003' }]);
+    const res = await request(app).post('/api/residentes').set('Authorization', `Bearer ${token}`)
+      .send({ nombres: 'Juan', apellidos: 'Pérez', fecha_nacimiento: '1948-03-15', sexo: 'M', fecha_ingreso: '' });
+    expect(res.status).toBe(201);
+    expect(consultar.mock.calls[0][0]).toMatch(/TRY_CAST\(@fechaIngreso AS DATE\)/);
   });
 
   test('DPI duplicado devuelve 409', async () => {

@@ -23,8 +23,14 @@ function manejadorErrores(err, req, res, next) {
   if (err && err.number === 547) {
     return res.status(400).json({ mensaje: 'Los datos no cumplen las reglas del sistema o hacen referencia a un registro inexistente.' });
   }
+  // Fecha u otro dato que SQL Server no pudo convertir (241, 242, 245, 8114)
+  if (err && [241, 242, 245, 8114].includes(err.number)) {
+    return res.status(400).json({ mensaje: 'Uno de los datos no tiene el formato correcto. Revise las fechas y los montos.' });
+  }
   console.error(err);
-  return res.status(500).json({ mensaje: 'Ocurrió un error en el servidor. Intente de nuevo.' });
+  return res.status(500).json({
+    mensaje: 'No se pudo completar la operación por un error del servidor. Sus datos no se guardaron; intente de nuevo y, si el problema continúa, avise al administrador.',
+  });
 }
 
 module.exports = { rutaNoEncontrada, manejadorErrores };

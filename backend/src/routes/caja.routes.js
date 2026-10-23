@@ -82,7 +82,7 @@ router.post('/cargos', permitirRoles(...PERMISOS.caja), manejar(async (req, res)
     `INSERT INTO cargos (residente_id, familiar_id, tipo, concepto, monto_base, descuento_pct, fecha_vencimiento, creado_por)
      OUTPUT INSERTED.id, INSERTED.monto
      SELECT r.id, (SELECT familiar_id FROM residente_familiar WHERE residente_id = r.id AND es_responsable = 1),
-            'Otro', @concepto, @base, @desc, ISNULL(@venc, DATEADD(DAY, 30, CAST(SYSDATETIME() AS DATE))), @u
+            'Otro', @concepto, @base, @desc, COALESCE(TRY_CAST(@venc AS DATE), DATEADD(DAY, 30, CAST(SYSDATETIME() AS DATE))), @u
      FROM residentes r WHERE r.id = @r`,
     { r: Number(b.residente_id), concepto: v.limpio(b.concepto), base: Number(b.monto_base),
       desc: v.vacio(b.descuento_pct) ? 0 : Number(b.descuento_pct), venc: v.limpio(b.fecha_vencimiento), u: req.usuario.id }
@@ -223,7 +223,7 @@ router.post('/donaciones', permitirRoles(...PERMISOS.caja), manejar(async (req, 
     const [d] = await q(
       `INSERT INTO donaciones (tipo_donante, donante, monto, fecha, descripcion, numero_recibo, clave_operacion, registrado_por)
        OUTPUT INSERTED.id, INSERTED.numero_recibo
-       VALUES (@tipo, @donante, @monto, ISNULL(@fecha, CAST(SYSDATETIME() AS DATE)), @desc, @recibo, @clave, @u)`,
+       VALUES (@tipo, @donante, @monto, COALESCE(TRY_CAST(@fecha AS DATE), CAST(SYSDATETIME() AS DATE)), @desc, @recibo, @clave, @u)`,
       { tipo: b.tipo_donante, donante: v.limpio(b.donante), monto: Number(b.monto), fecha: v.limpio(b.fecha),
         desc: v.limpio(b.descripcion), recibo, clave, u: req.usuario.id }
     );
@@ -258,7 +258,7 @@ router.post('/gastos', permitirRoles(...PERMISOS.caja), manejar(async (req, res)
   if (rep) return res.json({ ...rep, repetido: true });
   const [g] = await consultar(
     `INSERT INTO gastos (categoria, descripcion, monto, fecha, comprobante, clave_operacion, registrado_por) OUTPUT INSERTED.id
-     VALUES (@cat, @desc, @monto, ISNULL(@fecha, CAST(SYSDATETIME() AS DATE)), @comp, @clave, @u)`,
+     VALUES (@cat, @desc, @monto, COALESCE(TRY_CAST(@fecha AS DATE), CAST(SYSDATETIME() AS DATE)), @comp, @clave, @u)`,
     { cat: b.categoria, desc: v.limpio(b.descripcion), monto: Number(b.monto), fecha: v.limpio(b.fecha),
       comp: v.limpio(b.comprobante), clave, u: req.usuario.id }
   );

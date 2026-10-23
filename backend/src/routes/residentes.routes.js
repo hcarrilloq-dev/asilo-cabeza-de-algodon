@@ -1,5 +1,5 @@
 const express = require('express');
-const { consultar } = require('../config/db');
+const { consultar, transaccion } = require('../config/db');
 const { verificarToken, permitirRoles } = require('../middleware/auth');
 const { validarResidente, ESTADOS_RESIDENTE, idValido } = require('../validators/validaciones');
 const { PERMISOS } = require('../config/roles');
@@ -80,16 +80,26 @@ router.post('/', permitirRoles(...ESCRITURA), async (req, res, next) => {
     if (errores.length) return res.status(400).json({ mensaje: errores[0], errores });
 
     const p = parametros(req.body);
-    const filas = await consultar(
-      `DECLARE @sig INT = ISNULL((SELECT MAX(id) FROM residentes), 0) + 1;
-       INSERT INTO residentes (codigo, nombres, apellidos, dpi, fecha_nacimiento, sexo, fecha_ingreso,
-                               tipo_sangre, alergias, condiciones_medicas, psicopatologias, medicamentos_cajon, habitacion, observaciones, creado_por)
-       OUTPUT INSERTED.id, INSERTED.codigo
-       VALUES ('RES-' + RIGHT('0000' + CAST(@sig AS VARCHAR(10)), 4), @nombres, @apellidos, @dpi, @fechaNacimiento, @sexo,
-               ISNULL(@fechaIngreso, CAST(SYSDATETIME() AS DATE)), @tipoSangre, @alergias, @condiciones,
-               @psicopatologias, @medicamentosCajon, @habitacion, @observaciones, @usuarioId)`,
-      { ...p, usuarioId: req.usuario.id }
-    );
+    // El código RES-0001 se arma con el id que asigna la base (IDENTITY), dentro de la misma
+    // transacción: dos altas simultáneas nunca obtienen el mismo código (hallazgo H-18).
+    const filas = await transaccion(async (q) => {
+      const [nuevo] = await q(
+        `INSERT INTO residentes (codigo, nombres, apellidos, dpi, fecha_nacimiento, sexo, fecha_ingreso,
+                                 tipo_sangre, alergias, condiciones_medicas, psicopatologias, medicamentos_cajon, habitacion, observaciones, creado_por)
+         OUTPUT INSERTED.id
+         VALUES (CONCAT('TMP-', LEFT(REPLACE(CONVERT(VARCHAR(36), NEWID()), '-', ''), 16)), @nombres, @apellidos, @dpi, @fechaNacimiento, @sexo,
+                 COALESCE(TRY_CAST(@fechaIngreso AS DATE), CAST(SYSDATETIME() AS DATE)), @tipoSangre, @alergias, @condiciones,
+                 @psicopatologias, @medicamentosCajon, @habitacion, @observaciones, @usuarioId)`,
+        { ...p, usuarioId: req.usuario.id }
+      );
+      return q(
+        `UPDATE residentes
+         SET codigo = 'RES-' + IIF(id < 10000, RIGHT('0000' + CAST(id AS VARCHAR(10)), 4), CAST(id AS VARCHAR(10)))
+         OUTPUT INSERTED.id, INSERTED.codigo
+         WHERE id = @id`,
+        { id: nuevo.id }
+      );
+    });
     const { id, codigo } = filas[0];
     await registrarAuditoria({ usuarioId: req.usuario.id, accion: 'CREAR', tabla: 'residentes', registroId: id, detalle: codigo, ip: req.ip });
     return res.status(201).json({ id, codigo });
@@ -107,7 +117,7 @@ router.put('/:id', permitirRoles(...ESCRITURA), async (req, res, next) => {
     const id = req.idRegistro;
     const filas = await consultar(
       `UPDATE residentes SET nombres=@nombres, apellidos=@apellidos, dpi=@dpi, fecha_nacimiento=@fechaNacimiento,
-         sexo=@sexo, fecha_ingreso=ISNULL(@fechaIngreso, fecha_ingreso), tipo_sangre=@tipoSangre, alergias=@alergias,
+         sexo=@sexo, fecha_ingreso=COALESCE(TRY_CAST(@fechaIngreso AS DATE), fecha_ingreso), tipo_sangre=@tipoSangre, alergias=@alergias,
          condiciones_medicas=@condiciones, psicopatologias=@psicopatologias,
          medicamentos_cajon=@medicamentosCajon, habitacion=@habitacion, observaciones=@observaciones,
          actualizado_en=SYSDATETIME()
