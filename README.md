@@ -163,7 +163,7 @@ npm install
 npm test
 ```
 
-Resultado esperado: `Tests: 95 passed`.
+Resultado esperado: `Tests: 96 passed`.
 
 ### Pruebas de integración contra la base real
 
@@ -191,7 +191,7 @@ Los ocho roles salen del enunciado y del análisis (se agregó Enfermería, que 
 | Farmacia | Medicamentos indicados en las visitas: registra la entrega (sin diagnóstico ni ficha) |
 | Familiar responsable | Estado de cuenta y citas de su familiar |
 
-No existe registro público: solo el Administrador crea cuentas. El inicio de sesión se bloquea 15 minutos después de **10 intentos fallidos** desde una misma conexión; los ingresos correctos no cuentan para ese límite. Los permisos se validan en el backend (`backend/src/config/roles.js`), no solo ocultando botones.
+No existe registro público: solo el Administrador crea cuentas. El inicio de sesión de una cuenta se bloquea 15 minutos después de **10 intentos fallidos con esa cuenta**; el resto del personal puede seguir entrando aunque comparta la conexión. Como protección adicional, una conexión se bloquea tras 50 intentos fallidos con cuentas distintas. Los ingresos correctos no cuentan. Los permisos se validan en el backend (`backend/src/config/roles.js`), no solo ocultando botones.
 
 ## Reglas de negocio implementadas
 
@@ -231,6 +231,11 @@ Una petición con datos inválidos, un cuerpo que no es JSON o un identificador 
 | `Login failed for user 'asilo_app'` | Falta la autenticación mixta o la contraseña de `.env` no coincide. |
 | El frontend dice "No hay conexión con el servidor" | El backend no está encendido o `NEXT_PUBLIC_API_URL` es incorrecta. |
 | Instancia SQLEXPRESS no conecta | Escribir `DB_INSTANCE=SQLEXPRESS` en `.env` e iniciar el servicio *SQL Server Browser*. |
+
+## Mejoras futuras (aceptadas por el SQA)
+
+- **H-15:** guardar la sesión en una cookie `HttpOnly` en lugar de `localStorage`.
+- **H-20:** paginar los listados y reportes largos.
 
 ## Autor
 

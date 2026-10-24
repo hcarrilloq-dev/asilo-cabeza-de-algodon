@@ -74,25 +74,43 @@ describe('Inicio de sesión', () => {
   });
 });
 
-describe('Límite de intentos (H-19)', () => {
+describe('Límite de intentos (H-19 y observación de la regresión)', () => {
+  const usuarioBD = (email) => [{
+    id: 1, nombres: 'A', apellidos: 'B', email, password_hash: hashCorrecto, activo: true, rol: 'Administrador',
+  }];
+
   test('los ingresos correctos no cuentan para el bloqueo', async () => {
     for (let i = 0; i < 12; i += 1) {
-      consultar.mockResolvedValueOnce([{
-        id: 1, nombres: 'A', apellidos: 'B', email: 'admin@asilo.com', password_hash: hashCorrecto, activo: true, rol: 'Administrador',
-      }]);
+      consultar.mockResolvedValueOnce(usuarioBD('correcto@asilo.com'));
       const res = await request(app).post('/api/auth/login').set('X-Forwarded-For', '10.9.9.9')
-        .send({ email: 'admin@asilo.com', password: 'Asilo2026' });
+        .send({ email: 'correcto@asilo.com', password: 'Asilo2026' });
       expect(res.status).toBe(200);
     }
   });
 
-  test('los intentos fallidos sí se limitan', async () => {
+  test('10 intentos fallidos bloquean solo esa cuenta, no a los demás de la misma conexión', async () => {
     let ultimo;
     for (let i = 0; i < 11; i += 1) {
       ultimo = await request(app).post('/api/auth/login').set('X-Forwarded-For', '10.8.8.8')
-        .send({ email: 'nadie@asilo.com', password: 'Incorrecta1' });
+        .send({ email: 'olvidadizo@asilo.com', password: 'Incorrecta1' });
     }
     expect(ultimo.status).toBe(429);
+    expect(ultimo.body.mensaje).toMatch(/esta cuenta/);
+    // Otra persona en la misma conexión sigue entrando
+    consultar.mockResolvedValueOnce(usuarioBD('companera@asilo.com'));
+    const otra = await request(app).post('/api/auth/login').set('X-Forwarded-For', '10.8.8.8')
+      .send({ email: 'companera@asilo.com', password: 'Asilo2026' });
+    expect(otra.status).toBe(200);
+  });
+
+  test('muchas cuentas distintas fallando desde una conexión se bloquean a los 50 intentos', async () => {
+    let ultimo;
+    for (let i = 0; i < 51; i += 1) {
+      ultimo = await request(app).post('/api/auth/login').set('X-Forwarded-For', '10.7.7.7')
+        .send({ email: `intruso${i}@asilo.com`, password: 'Incorrecta1' });
+    }
+    expect(ultimo.status).toBe(429);
+    expect(ultimo.body.mensaje).toMatch(/esta conexión/);
   });
 });
 

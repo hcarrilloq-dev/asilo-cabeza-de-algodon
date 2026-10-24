@@ -9,19 +9,38 @@ const { registrarAuditoria } = require('../utils/auditoria');
 
 const router = express.Router();
 
-// Máximo 10 intentos FALLIDOS de inicio de sesión cada 15 minutos por IP (hallazgo H-19):
-// los ingresos correctos no cuentan, para no bloquear al personal que comparte la conexión del asilo.
-const limiteLogin = rateLimit({
-  windowMs: 15 * 60 * 1000,
+// Límite de intentos FALLIDOS de inicio de sesión (hallazgos H-19 y su observación de la regresión).
+// Los ingresos correctos no cuentan.
+// 1) Por cuenta: 10 fallidos en 15 minutos bloquean SOLO esa cuenta; el resto del personal
+//    que comparte la conexión del asilo puede seguir entrando.
+// 2) Por conexión: 50 fallidos en 15 minutos desde una misma IP, como protección contra
+//    quien prueba muchas cuentas distintas.
+const VENTANA = 15 * 60 * 1000;
+const respuestaBloqueo = (mensaje) => (req, res) => res.status(429).json({ mensaje });
+const cuentaDe = (req) => (req.body && typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '');
+
+const limitePorCuenta = rateLimit({
+  windowMs: VENTANA,
   max: Number(process.env.LOGIN_MAX_FALLIDOS) || 10,
   skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { mensaje: 'Demasiados intentos fallidos desde esta conexión. Espere 15 minutos e intente de nuevo.' },
+  skip: (req) => !cuentaDe(req),
+  keyGenerator: (req) => `cuenta:${cuentaDe(req)}`,
+  handler: respuestaBloqueo('Demasiados intentos fallidos con esta cuenta. Espere 15 minutos o pida al administrador que revise su contraseña.'),
+});
+
+const limitePorConexion = rateLimit({
+  windowMs: VENTANA,
+  max: Number(process.env.LOGIN_MAX_FALLIDOS_CONEXION) || 50,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: respuestaBloqueo('Demasiados intentos fallidos desde esta conexión. Espere 15 minutos e intente de nuevo.'),
 });
 
 // POST /api/auth/login
-router.post('/login', limiteLogin, async (req, res, next) => {
+router.post('/login', limitePorConexion, limitePorCuenta, async (req, res, next) => {
   try {
     const errores = validarLogin(req.body);
     if (errores.length) return res.status(400).json({ mensaje: errores[0], errores });
